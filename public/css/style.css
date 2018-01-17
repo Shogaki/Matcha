@@ -326,7 +326,8 @@ a {
 
 #connexion-div{
 	background-color: white;
-	width: 900px;
+	width:40%;
+	min-width:400px;
 	margin: auto;
 	margin-top:40px;
 	border-radius: 10px;
