@@ -1,0 +1,42 @@
+<link href="/css/style.css" rel="stylesheet" type="text/css">
+<% include parts/header.ejs %>
+<title>Connexion</title>
+<br>
+  <div id="connexion-div">
+    <h1>Connexion</h1>
+    <div class="form-container">
+      <form action="/connexion-back" method="post">
+        <div class="field">
+          <input class="input-form" type="text" name="username" required>
+          <span class="highlight"></span>
+          <span class="bar"></span>
+          <label class="input-label">Pseudo</label>
+        </div>
+        <div class="field">
+          <input class="input-form" type="password" name="mdp" required>
+          <span class="highlight"></span>
+          <span class="bar"></span>
+          <label class="input-label">Mot de passe</label>
+        </div>
+        <input type="submit" value="Se connecter" name="connect" class="button" style="vertical-align:middle"></button>
+      </form>
+    </div>
+    <script>
+    function maPosition(position){
+      var infopos = "Latitude: "+position.coords.latitude +"\n";
+          infopos +="Longitude: "+position.coords.longitude+"\n";
+      document.getElementById("infoposition").innerHTML = infopos;
+    }
+    function error()
+    {
+
+    }
+
+    if(navigator.geolocation)
+    {
+      navigator.geolocation.getCurrentPosition(maPosition, error);
+    }
+    </script>
+      <div id="infoposition"></div>
+    </body>
+    </html>

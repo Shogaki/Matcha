@@ -1,0 +1,42 @@
+<link href="/css/style.css" rel="stylesheet" type="text/css">
+<% include parts/header.ejs %>
+<title>Inscription</title>
+<br>
+  <div id="connexion-div">
+  <h1>Inscription</h1><br><br>
+<div class="form-container">
+  <form action="/inscription-back" method="post">
+    <div class="field">
+      <input class="input-form" type="text" name="pseudo" required>
+      <span class="highlight"></span>
+      <span class="bar"></span>
+      <label class="input-label">Pseudo</label>
+    </div>
+    <div class="field">
+      <input class="input-form" type="password" name="passwd" required>
+      <span class="highlight"></span>
+      <span class="bar"></span>
+      <label class="input-label">Mot de Passe</label>
+    </div>
+    <div class="field">
+      <input class="input-form" type="email" name="email" required>
+      <span class="highlight"></span>
+      <span class="bar"></span>
+      <label class="input-label">Email</label>
+    </div>
+    <div class="field">
+      <input class="input-form" type="text" name="prenom" required>
+      <span class="highlight"></span>
+      <span class="bar"></span>
+      <label class="input-label">Prenom</label>
+    </div>
+    <div class="field">
+      <input class="input-form" type="text" name="nom" required>
+      <span class="highlight"></span>
+      <span class="bar"></span>
+      <label class="input-label">Nom</label>
+      <br><br><input type="submit" value="Inscription" name="inscription" class="button" style="vertical-align:middle"></button>
+    </div>
+  </div>
+  </form>
+  </div>
