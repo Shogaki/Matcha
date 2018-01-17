@@ -20,21 +20,29 @@
         </div>
         <input type="submit" value="Se connecter" name="connect" class="button" style="vertical-align:middle"></button>
       </form>
+      <div id=location> </div>
     </div>
     <script>
-    function maPosition(position){
-      var infopos = "Latitude: "+position.coords.latitude +"\n";
-          infopos +="Longitude: "+position.coords.longitude+"\n";
-      document.getElementById("infoposition").innerHTML = infopos;
-    }
-    function error()
-    {
-
+    function accepted(position){
+      console.log("mdr");
+      locate(position.coords.latitude, position.coords.longitude)
     }
 
+    function error(){
+      console.log("lol");
+      locate(<%=values.latitude %>, <%=values.longitude%>)
+    }
+
+    function locate(lat, lng){
+      var latLng = new google.maps.LatLng(lat, lng);
+      new google.maps.Geocoder().geocode({"latLng": latLng}, function(results, status) {
+        document.querySelector("#location").innerHTML = results[0].address_components["3"].long_name + " (" + results[0].address_components["6"].long_name + ")";
+        console.log(results[0]);
+      });
+    }
     if(navigator.geolocation)
     {
-      navigator.geolocation.getCurrentPosition(maPosition, error);
+      navigator.geolocation.getCurrentPosition(accepted, error);
     }
     </script>
       <div id="infoposition"></div>

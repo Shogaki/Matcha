@@ -98,16 +98,14 @@ function escapeHtml(text) {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
 }
-function getFullLocation(){
+function getFullLocationandrender(res, page){
   http.get({'host': 'api.ipify.org', 'port': 80, 'path': '/'}, function(resp)
   {
     var ip = resp.on('data', function(ip)
     {
       console.log("ip1 = " + ip)
       iplocate(ip).then((results) => {
-        console.log("ip3 = " + results.longitude)
-        console.log("ip3 = " + results.latitude)
-        return(results);
+        res.render(page, {values: results})
       });
     });
   })
@@ -119,8 +117,7 @@ app.get('/', function(req, res) {
   if (sess.user_id)
     res.render('home')
   else {
-    console.log("ip2 = " + getFullLocation())
-    res.render('connexion', {ip: getFullLocation()})
+    res.render('connexion', {values: getFullLocation()})
   }
 })
 app.get('/offline', function(req, res) {res.render('offline-home')})
@@ -148,7 +145,7 @@ app.get('/profil/:username', function(req, res) {
   })
 })
 app.get('/connexion', function(req, res){
-  res.render('connexion', {values: getFullLocation()})
+  getFullLocationandrender(res, 'connexion')
 })
 
 
