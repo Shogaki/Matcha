@@ -1,11 +1,11 @@
 <link href="/css/style.css" rel="stylesheet" type="text/css">
 <% include parts/header.ejs %>
-<div class="ui yellow center aligned segment">
+<div class="ui yellow center aligned segment" id="connexion-div">
   <div class="header">Recherche ton duo</div>
   <div class="center aligned">
-  <div class="ui center form">
-    <div class="inline fields">
-    <label>Quels genres recherches tu ? :) </label>
+  <div class="ui fields form">
+    <br><br><label>Quel(s) genre(s) recherches tu ? :) </label><br>
+    <div class="inline fields middle" style="width:175px; margin:auto">
       <div class="field">
         <div class="ui radio checkbox">
         <input type="checkbox" name="frequency" checked="checked">
@@ -22,32 +22,33 @@
         <div class="ui radio checkbox">
         <input type="checkbox" name="frequency">
         <label><i class="other gender icon"></i></label>
-      </div>
     </div>
   </div>
 </div>
 les # que tu recherches
 <div class="ui search">
-  <input class="prompt" type="text" placeholder="#jsussl1k">
+  <input class="prompt center" type="text" placeholder="#jsussl1k #lainkapeté">
   <div class="results"></div>
 </div>
-iel est ou ?
-<div class="ui search">
-  <input class="prompt" type="text" placeholder="Nombre de Km max">
+Oussa
+<div class="ui search inline wide field">
+  <input class="prompt center" type="text" placeholder="Nombre de Km max">
   <div class="results"></div>
 </div>
 Quel popularité sur le site ?
-<div class="ui search">
-  <input class="prompt" type="text" placeholder="point pop max">
+<div class="ui search inline wide field">
+  <input class="prompt center" type="text" placeholder="point pop min">
   <div class="results"></div>
 </div>
 Quel ages ?
-<div class="ui search">
-  <input class="prompt" type="text" placeholder="15 a nn c tro jeun">
+<div class="fields center" style="width:300px;margin:auto">
+<div class="field">
+  <input class="prompt center" type="text" placeholder="15 a nn c tro jeun">
   <div class="results"></div>
 </div>
-<div class="ui search">
-  <input class="prompt" type="text" placeholder="99 j m lé vieu">
+<div class="field">
+  <input class="prompt center" type="text" placeholder="99 j m lé vieu">
   <div class="results"></div>
+</div>
 </div>
 </div>
