@@ -7,6 +7,7 @@ var htmlspecialchars  = require('htmlspecialchars')
 var bodyParser        = require('body-parser')
 var mysql             = require('mysql')
 var iplocate          = require('node-iplocate')
+var faker             = require('faker');
 var app               = express()
 var port              = 8081
 var con               = mysql.createConnection({
@@ -105,13 +106,59 @@ function getFullLocation(){
     {
       console.log("ip1 = " + ip)
       iplocate(ip).then((results) => {
-        console.log("ip3 = " + results.longitude)
-        console.log("ip3 = " + results.latitude)
         return(results);
       });
     });
   })
 }
+
+
+app.get('/install', function(req, res) {
+  var n = 0;
+
+  faker.locale = "fr";
+  while (n <= 1000
+  )
+  {
+    var password  = faker.internet.password(8, true);
+    faker.locale = "en";
+    var prenom    = faker.name.firstName(0);
+    faker.locale = "fr";
+    var nom       = faker.name.lastName(0);
+    var login     = faker.internet.userName(prenom, nom);
+    var birthdate = faker.date.past(60).toISOString().slice(0, 19).replace('T', ' ');
+    var or_h      = faker.random.boolean();
+    var or_f      = faker.random.boolean();
+    var or_a      = (or_h || or_f ? faker.random.boolean() : true);
+    var long      = faker.address.longitude()
+    var lat       = faker.address.latitude();
+    var city      = faker.address.city()
+    var sexe      = faker.random.number({min:0, max:2});
+    var bio       = faker.lorem.paragraph();
+    var email     = faker.internet.email(prenom, nom);
+    var popularity= faker.random.number({min:0, max:1500});
+    var status    = 0;
+    var unlogged  = faker.date.recent(360).toISOString().slice(0, 19).replace('T', ' ');
+    var values = "'" + login + "', '" + password + "', '" + prenom + "', '" + nom + "', '" + birthdate + "', " + (or_h ? 1 : 0) + ", " + (or_f ? 1 : 0) + ", "
+    values += (or_a ? 1 : 0) + ", " +  long + ", " + lat + ", '" +  city + "', " + sexe + ", '" + bio + "', '" + email + "', " + popularity + ", " + status + ", '" + unlogged + "')"
+    sql = "INSERT INTO `user` (`login`, `password`, `prenom`, `nom`, `birth_date`, `or_h`, `or_f`, `or_a`, `longitude`, `latitude`, `ville`, `sexe`, `bio`, `email`, `popularity`, `status`,`time`) VALUES ("
+    if(prenom != "angelo")
+    {
+      con.query(sql + values, function (err, result){
+      if(err)
+      {
+        console.log(n)
+      //  throw err;
+      }
+
+    })
+    console.log(n);
+    n++;
+  }
+}
+console.log("c bon mdr")
+
+})
 
 // FRONT
 app.get('/', function(req, res) {
@@ -157,17 +204,24 @@ app.get('/inscription', function(req, res){res.render('inscription')})
 app.get('/search', function(req, res){res.render('search')})
 app.get('/edit-profile', function(req, res){res.render('edit-profile')})
 app.get('/favicon.ico', function(req, res) {})
-app.post('/search-back'), function(req, res){
+
+
+
+
+
+
+app.post('/search-back', function(req, res){
   var sess          = req.session
   var post          = req.body
-  var sexe          = post.sex     //H F ou A
+  var or_a          = (typeof req.or_a !== "undefined" || req.or_a !== null ? 1 : 0);
+  var or_h          = (typeof req.or_h !== "undefined" || req.or_h !== null ? 1 : 0);
+  var or_f          = (typeof req.or_f !== "undefined" || req.or_f !== null ? 1 : 0);
   var ageMin        = parseInt(post.agemin);
   var ageMax        = parseInt(post.agemax);
   var popMin        = parseInt(post.popmin);
-  var popMax        = parseInt(post.popmax);
   var distMax       = post.distmax
-  var tagslist      = post.tags
-  var tags          = "#poulet #lol #fun #delire".replace(/[ ]*/g, '').substr(1).split('#')
+  var n             = 0;
+  var tags          = post.tags.replace(/[ ]*/g, '').substr(1).split('#')
   if (or_a + or_f + or_h == 0)
     res.render('error', {error: 40})
   else {
@@ -177,11 +231,11 @@ app.post('/search-back'), function(req, res){
       n++;
     }
     if (or_f == 1)  {
-      sql += (or_h != 0 ? OR : (n != 0 ? " AND " : "")) + " user.sexe = 2 "
+      sql += (or_h != 0 ? " OR " : (n != 0 ? " AND " : "")) + " user.sexe = 2 "
       n++;
     }
     if (or_a == 1)  {
-      sql += (or_h + or_f != 0 ? "OR" : (n != 0 ? " AND " : "")) + " user.sexe = 0 "
+      sql += (or_h + or_f != 0 ? " OR " : (n != 0 ? " AND " : "")) + " user.sexe = 0 "
       n++;
     }
     if (!isNaN(ageMin))  {
@@ -196,19 +250,19 @@ app.post('/search-back'), function(req, res){
       sql += (n != 0 ? " AND " : "") + " user.popularity > " + popMin
       n++;
     }
-    if (!isNaN(popMax))  {
-      sql += (n != 0 ? " AND " : "") + " user.popularity < " + popMax
-      n++;
-    }
     tags.forEach(function(element) {
       sql += (n != 0 ? " AND " : "") + "tags.name = '" + element + "'"
       n++;
     });
   }
   console.log(sql);
+})
 
 
-}
+
+
+
+
 app.post('/inscription-back',function(req,res){
   var sess          = req.session
   var post          = req.body
@@ -307,6 +361,14 @@ app.get('/logout',function(req,res){
         res.redirect('/')
       }
     })
+  })
+})
+sql = "SELECT id, FLOOR(get_distance_metres (48.8966066, 2.318501400000059, latitude, longitude) / 1000) AS dist, latitude, longitude FROM `user` ORDER BY dist DESC"
+
+con.query(sql, function (err, result) {
+  result.forEach(function(element)
+  {
+    console.log(element['id'] + " " + element['dist'] + "   " + element['longitude'] + "   " + element['latitude'])
   })
 })
 
