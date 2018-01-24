@@ -114,7 +114,70 @@ function getFullLocation(){
     });
   })
 }
+function addRandomTags(id)
+{
+  sql = 'SELECT (count(id)) AS Nb FROM tags WHERE 1 < 2'
+  con.query(sql, function (err, result){
+    tags_nb = result[0].Nb;
+    n = getRandominInterval(2, 6)
+    i = 0
+    while (i < n)
+    {
+      sql = "INSERT INTO `user_tag`(`id_tag`, `id_user`) VALUES (" + Math.round(getRandominInterval(0, tags_nb)) + ", " + id + ")"
+      con.query(sql, function (err, result) {
+      })
+      i++;
+    }
+  })
 
+}
+
+app.get('/install', function (req, res){
+  console.log("⚙️  | Starting installation ")
+  console.log("⚙️  | Tags creation ")
+  var sql = 'INSERT INTO `tags` (`name`) VALUES ? '
+  var values = [
+    ['risitas'],
+    ['jvc'],
+    ['swag'],
+    ['wankil'],
+    ['tatoo'],
+    ['geek'],
+    ['lol'],
+    ['minecraft'],
+    ['lunette'],
+    ['triste'],
+    ['suicide'],
+    ['siphano'],
+    ['plante'],
+    ['ecologie'],
+    ['cordonbleu'],
+    ['ananas'],
+    ['love'],
+    ['keke'],
+    ['lovearmy'],
+    ['japon'],
+    ['lolita'],
+    ['starwars'],
+    ['netflix'],
+    ['strmwood'],
+    ['vinyle'],
+    ['aspirateur'],
+    ['corobizar'],
+    ['lamasticot'],
+    ['pgm'],
+    ['brocoli']]
+    con.query(sql, [values], function (err, result) {
+      if (err) throw err;
+      console.log("Number of records inserted: " + result.affectedRows);
+      console.log("✅  | Tags created ")
+      console.log("⚙️  | Fake user creation")
+      res.redirect('/addfakeaccount/1500')
+      console.log("✅  | 1500 fake users created")
+      console.log("✅  | Installation Done")
+    });
+
+})
 
 app.get('/addfakeaccount/:nb', function(req, res) {
   var n = 0;
@@ -133,9 +196,10 @@ app.get('/addfakeaccount/:nb', function(req, res) {
     var or_h      = faker.random.boolean();
     var or_f      = faker.random.boolean();
     var or_a      = (or_h || or_f ? faker.random.boolean() : true);
-    var lat      = getRandominInterval(41.3565587, 50.545468);
-    var long       = getRandominInterval(-5.235884, 9.567371);
+    var lat       = getRandominInterval(41.3565587, 50.545468);
+    var long      = getRandominInterval(-5.235884, 9.567371);
     var city      = faker.address.city()
+
     var sexe      = faker.random.number({min:0, max:2});
     var bio       = faker.lorem.paragraph();
     var email     = faker.internet.email(prenom, nom);
@@ -147,16 +211,15 @@ app.get('/addfakeaccount/:nb', function(req, res) {
     sql = "INSERT INTO `user` (`login`, `password`, `prenom`, `nom`, `birth_date`, `or_h`, `or_f`, `or_a`, `longitude`, `latitude`, `ville`, `sexe`, `bio`, `email`, `popularity`, `status`,`time`) VALUES ("
     if(prenom != "angelo")
     {
-      res.write(n + "    " + login + "    " + prenom + "    " + nom + "<br>");
       con.query(sql + values, function (err, result){
-        if (n == req.params.nb)
-          res.end()
-    })
-    n++;
+        if (!(typeof result == "undefined" || result == null))
+          addRandomTags(result.insertId);
+        else
+          console.log(sql + values);
+      })
+      n++;
+    }
   }
-}
-console.log("c bon mdr")
-
 })
 
 // FRONT
@@ -196,19 +259,10 @@ app.get('/profil/:username', function(req, res) {
 app.get('/connexion', function(req, res){
   res.render('connexion', {values: getFullLocation()})
 })
-
-
-
 app.get('/inscription', function(req, res){res.render('inscription')})
 app.get('/search', function(req, res){res.render('search')})
 app.get('/edit-profile', function(req, res){res.render('edit-profile')})
 app.get('/favicon.ico', function(req, res) {})
-
-
-
-
-
-
 app.post('/search-back', function(req, res){
   var sess          = req.session
   var post          = req.body
@@ -256,12 +310,6 @@ app.post('/search-back', function(req, res){
   }
   console.log(sql);
 })
-
-
-
-
-
-
 app.post('/inscription-back',function(req,res){
   var sess          = req.session
   var post          = req.body
@@ -360,14 +408,6 @@ app.get('/logout',function(req,res){
         res.redirect('/')
       }
     })
-  })
-})
-sql = "SELECT popularity, FLOOR(get_distance_metres (48.8966066, 2.318501400000059, latitude, longitude) / 1000) AS dist, login FROM `user` ORDER BY popularity DESC"
-
-con.query(sql, function (err, result) {
-  result.forEach(function(element)
-  {
-    console.log(element['popularity'] + "   " + element['dist'] + "   " + element['login'])
   })
 })
 
