@@ -31,6 +31,9 @@ app.use(session({ secret: "Jean-michel crapaud, c'est lui, il est dans la river"
 function deg2rad(x){
   return Math.PI*x/180;
 }
+function getRandominInterval(min, max) {
+  return Math.random() * (max - min) + min;
+}
 function get_distance_m($lat1, $lng1, $lat2, $lng2) {
   $earth_radius = 6378137;   // Terre = sphère de 6378km de rayon
   $rlo1 = deg2rad($lng1);    // CONVERSION
@@ -113,12 +116,12 @@ function getFullLocation(){
 }
 
 
-app.get('/install', function(req, res) {
+app.get('/addfakeaccount/:nb', function(req, res) {
   var n = 0;
 
   faker.locale = "fr";
-  while (n <= 1000
-  )
+  res.write('<!DOCTYPE html>')
+  while (n <= req.params.nb)
   {
     var password  = faker.internet.password(8, true);
     faker.locale = "en";
@@ -130,13 +133,13 @@ app.get('/install', function(req, res) {
     var or_h      = faker.random.boolean();
     var or_f      = faker.random.boolean();
     var or_a      = (or_h || or_f ? faker.random.boolean() : true);
-    var long      = faker.address.longitude()
-    var lat       = faker.address.latitude();
+    var lat      = getRandominInterval(41.3565587, 50.545468);
+    var long       = getRandominInterval(-5.235884, 9.567371);
     var city      = faker.address.city()
     var sexe      = faker.random.number({min:0, max:2});
     var bio       = faker.lorem.paragraph();
     var email     = faker.internet.email(prenom, nom);
-    var popularity= faker.random.number({min:0, max:1500});
+    var popularity= faker.random.number({min:40, max:1500});
     var status    = 0;
     var unlogged  = faker.date.recent(360).toISOString().slice(0, 19).replace('T', ' ');
     var values = "'" + login + "', '" + password + "', '" + prenom + "', '" + nom + "', '" + birthdate + "', " + (or_h ? 1 : 0) + ", " + (or_f ? 1 : 0) + ", "
@@ -144,15 +147,11 @@ app.get('/install', function(req, res) {
     sql = "INSERT INTO `user` (`login`, `password`, `prenom`, `nom`, `birth_date`, `or_h`, `or_f`, `or_a`, `longitude`, `latitude`, `ville`, `sexe`, `bio`, `email`, `popularity`, `status`,`time`) VALUES ("
     if(prenom != "angelo")
     {
+      res.write(n + "    " + login + "    " + prenom + "    " + nom + "<br>");
       con.query(sql + values, function (err, result){
-      if(err)
-      {
-        console.log(n)
-      //  throw err;
-      }
-
+        if (n == req.params.nb)
+          res.end()
     })
-    console.log(n);
     n++;
   }
 }
@@ -363,12 +362,12 @@ app.get('/logout',function(req,res){
     })
   })
 })
-sql = "SELECT id, FLOOR(get_distance_metres (48.8966066, 2.318501400000059, latitude, longitude) / 1000) AS dist, latitude, longitude FROM `user` ORDER BY dist DESC"
+sql = "SELECT popularity, FLOOR(get_distance_metres (48.8966066, 2.318501400000059, latitude, longitude) / 1000) AS dist, login FROM `user` ORDER BY popularity DESC"
 
 con.query(sql, function (err, result) {
   result.forEach(function(element)
   {
-    console.log(element['id'] + " " + element['dist'] + "   " + element['longitude'] + "   " + element['latitude'])
+    console.log(element['popularity'] + "   " + element['dist'] + "   " + element['login'])
   })
 })
 
