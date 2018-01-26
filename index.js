@@ -34,18 +34,6 @@ function deg2rad(x){
 function getRandominInterval(min, max) {
   return Math.random() * (max - min) + min;
 }
-function get_distance_m($lat1, $lng1, $lat2, $lng2) {
-  $earth_radius = 6378137;   // Terre = sphère de 6378km de rayon
-  $rlo1 = deg2rad($lng1);    // CONVERSION
-  $rla1 = deg2rad($lat1);
-  $rlo2 = deg2rad($lng2);
-  $rla2 = deg2rad($lat2);
-  $dlo = ($rlo2 - $rlo1) / 2;
-  $dla = ($rla2 - $rla1) / 2;
-  $a = (Math.sin($dla) * Math.sin($dla)) + Math.cos($rla1) * Math.cos($rla2) * (Math.sin($dlo) * Math.sin($dlo));
-  $d = 2 * Math.atan2(Math.sqrt($a), Math.sqrt(1 - $a));
-  return ($earth_radius * $d);
-}
 function _ago(ago) {
     var now = Math.floor(Date.now() / 1000);
     var diff = now - ago
@@ -114,8 +102,7 @@ function getFullLocation(){
     });
   })
 }
-function addRandomTags(id)
-{
+function addRandomTags(id){
   sql = 'SELECT (count(id)) AS Nb FROM tags WHERE 1 < 2'
   con.query(sql, function (err, result){
     tags_nb = result[0].Nb;
@@ -130,6 +117,46 @@ function addRandomTags(id)
     }
   })
 
+}
+function addFakeAccounts(nb){
+  var n = 0;
+
+  faker.locale = "fr";
+  while (n <= nb)
+  {
+    var password  = faker.internet.password(8, true);
+    faker.locale = "en";
+    var prenom    = faker.name.firstName(0);
+    faker.locale = "fr";
+    var nom       = faker.name.lastName(0);
+    var login     = faker.internet.userName(prenom, nom);
+    var birthdate = faker.date.between('1945-01-01', '1999-12-31').toISOString().slice(0, 19).replace('T', ' ');
+    var or_h      = faker.random.boolean();
+    var or_f      = faker.random.boolean();
+    var or_a      = (or_h || or_f ? faker.random.boolean() : true);
+    var lat       = getRandominInterval(41.3565587, 50.545468);
+    var long      = getRandominInterval(-5.235884, 9.567371);
+    var city      = faker.address.city()
+    var sexe      = faker.random.number({min:0, max:2});
+    var bio       = faker.lorem.paragraph();
+    var email     = faker.internet.email(prenom, nom);
+    var popularity= faker.random.number({min:40, max:1500});
+    var status    = 0;
+    var unlogged  = faker.date.recent(360).toISOString().slice(0, 19).replace('T', ' ');
+    var values = "'" + login + "', '" + password + "', '" + prenom + "', '" + nom + "', '" + birthdate + "', " + (or_h ? 1 : 0) + ", " + (or_f ? 1 : 0) + ", "
+    values += (or_a ? 1 : 0) + ", " +  long + ", " + lat + ", '" +  city + "', " + sexe + ", '" + bio + "', '" + email + "', " + popularity + ", " + status + ", '" + unlogged + "')"
+    sql = "INSERT INTO `user` (`login`, `password`, `prenom`, `nom`, `birth_date`, `or_h`, `or_f`, `or_a`, `longitude`, `latitude`, `ville`, `sexe`, `bio`, `email`, `popularity`, `status`,`time`) VALUES ("
+    if(prenom != "angelo")
+    {
+      con.query(sql + values, function (err, result){
+        if (!(typeof result == "undefined" || result == null))
+          addRandomTags(result.insertId);
+        else
+          console.log(sql + values);
+      })
+      n++;
+    }
+  }
 }
 
 app.get('/install', function (req, res){
@@ -172,54 +199,14 @@ app.get('/install', function (req, res){
       console.log("Number of records inserted: " + result.affectedRows);
       console.log("✅  | Tags created ")
       console.log("⚙️  | Fake user creation")
-      res.redirect('/addfakeaccount/1500')
+      addFakeAccounts(1500)
       console.log("✅  | 1500 fake users created")
       console.log("✅  | Installation Done")
     });
 
 })
-
 app.get('/addfakeaccount/:nb', function(req, res) {
-  var n = 0;
-
-  faker.locale = "fr";
-  res.write('<!DOCTYPE html>')
-  while (n <= req.params.nb)
-  {
-    var password  = faker.internet.password(8, true);
-    faker.locale = "en";
-    var prenom    = faker.name.firstName(0);
-    faker.locale = "fr";
-    var nom       = faker.name.lastName(0);
-    var login     = faker.internet.userName(prenom, nom);
-    var birthdate = faker.date.past(60).toISOString().slice(0, 19).replace('T', ' ');
-    var or_h      = faker.random.boolean();
-    var or_f      = faker.random.boolean();
-    var or_a      = (or_h || or_f ? faker.random.boolean() : true);
-    var lat       = getRandominInterval(41.3565587, 50.545468);
-    var long      = getRandominInterval(-5.235884, 9.567371);
-    var city      = faker.address.city()
-
-    var sexe      = faker.random.number({min:0, max:2});
-    var bio       = faker.lorem.paragraph();
-    var email     = faker.internet.email(prenom, nom);
-    var popularity= faker.random.number({min:40, max:1500});
-    var status    = 0;
-    var unlogged  = faker.date.recent(360).toISOString().slice(0, 19).replace('T', ' ');
-    var values = "'" + login + "', '" + password + "', '" + prenom + "', '" + nom + "', '" + birthdate + "', " + (or_h ? 1 : 0) + ", " + (or_f ? 1 : 0) + ", "
-    values += (or_a ? 1 : 0) + ", " +  long + ", " + lat + ", '" +  city + "', " + sexe + ", '" + bio + "', '" + email + "', " + popularity + ", " + status + ", '" + unlogged + "')"
-    sql = "INSERT INTO `user` (`login`, `password`, `prenom`, `nom`, `birth_date`, `or_h`, `or_f`, `or_a`, `longitude`, `latitude`, `ville`, `sexe`, `bio`, `email`, `popularity`, `status`,`time`) VALUES ("
-    if(prenom != "angelo")
-    {
-      con.query(sql + values, function (err, result){
-        if (!(typeof result == "undefined" || result == null))
-          addRandomTags(result.insertId);
-        else
-          console.log(sql + values);
-      })
-      n++;
-    }
-  }
+  addFakeAccounts(req.params.nb)
 })
 
 // FRONT
@@ -266,19 +253,20 @@ app.get('/favicon.ico', function(req, res) {})
 app.post('/search-back', function(req, res){
   var sess          = req.session
   var post          = req.body
-  var or_a          = (typeof req.or_a !== "undefined" || req.or_a !== null ? 1 : 0);
-  var or_h          = (typeof req.or_h !== "undefined" || req.or_h !== null ? 1 : 0);
-  var or_f          = (typeof req.or_f !== "undefined" || req.or_f !== null ? 1 : 0);
-  var ageMin        = parseInt(post.agemin);
-  var ageMax        = parseInt(post.agemax);
-  var popMin        = parseInt(post.popmin);
-  var distMax       = post.distmax
+  var or_a          = (typeof post.or_a !== "undefined" && post.or_a !== null ? 1 : 0);
+  var or_h          = (typeof post.or_h !== "undefined" && post.or_h !== null ? 1 : 0);
+  var or_f          = (typeof post.or_f !== "undefined" && post.or_f !== null ? 1 : 0);
+  var today         = new Date();
+  var ageMin        = post.ageMin;
+  var ageMax        = post.ageMax;
+  var popMin        = parseInt(post.popMin);
+  var distMax       = post.distMax
   var n             = 0;
   var tags          = post.tags.replace(/[ ]*/g, '').substr(1).split('#')
   if (or_a + or_f + or_h == 0)
     res.render('error', {error: 40})
   else {
-    var sql           = "SELECT * FROM user " + (tags.lenght != 0 ? "INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE "
+    var sql           = "SELECT DISTINCT user.login, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) dist FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE ("
     if (or_h == 1)  {
       sql += (n != 0 ? " AND " : "") + " user.sexe = 1 "
       n++;
@@ -291,24 +279,42 @@ app.post('/search-back', function(req, res){
       sql += (or_h + or_f != 0 ? " OR " : (n != 0 ? " AND " : "")) + " user.sexe = 0 "
       n++;
     }
-    if (!isNaN(ageMin))  {
-      sql += (n != 0 ? " AND " : "") + " user.age > " + ageMin
-      n++;
+    sql += ")"
+    if (ageMin != "" && ageMax != "")
+    {
+      var birthdateMin  = new Date();
+      var birthdateMax  = new Date();
+      birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
+      birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
+      sql += " AND (birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
     }
-    if (!isNaN(ageMax))  {
-      sql += (n != 0 ? " AND " : "") + " user.age < " + ageMax
-      n++;
+    else if (ageMin == "" && ageMax != "")
+    {
+      var birthdateMin  = new Date();
+      birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
+      sql += " AND (birth_date >= '" + birthdateMin.toISOString().substring(0, 10) + "')"
+    }
+    else if (ageMin != "" && ageMax == "")
+    {
+      var birthdateMax  = new Date();
+      birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
+      sql += " AND (birth_date <= '" + birthdateMax.toISOString().substring(0, 10) + "')"
     }
     if (!isNaN(popMin))  {
       sql += (n != 0 ? " AND " : "") + " user.popularity > " + popMin
       n++;
     }
-    tags.forEach(function(element) {
-      sql += (n != 0 ? " AND " : "") + "tags.name = '" + element + "'"
-      n++;
-    });
-  }
-  console.log(sql);
+    if (post.tags != "")
+    {
+      tags.forEach(function(element) {
+        sql += (n != 0 ? " AND " : "") + "tags.name = '" + element + "'"
+        n++;
+      });
+    }
+    if (distMax != "" && !isNaN(distMax))
+        sql += " HAVING DIST > " + distMax
+}
+  console.log(sql + " ORDER BY popularity DESC");
 })
 app.post('/inscription-back',function(req,res){
   var sess          = req.session
