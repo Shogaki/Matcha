@@ -246,6 +246,9 @@ app.get('/profil/:username', function(req, res) {
 app.get('/connexion', function(req, res){
   res.render('connexion', {values: getFullLocation()})
 })
+
+
+app.get('/test', function(req, res){res.render('visite')})
 app.get('/inscription', function(req, res){res.render('inscription')})
 app.get('/search', function(req, res){res.render('search')})
 app.get('/edit-profile', function(req, res){res.render('edit-profile')})
