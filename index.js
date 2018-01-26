@@ -152,12 +152,12 @@ app.get('/connexion', function(req, res){
 })
 
 
-
+app.get('/test', function(req, res){res.render('visite')})
 app.get('/inscription', function(req, res){res.render('inscription')})
 app.get('/search', function(req, res){res.render('search')})
 app.get('/edit-profile', function(req, res){res.render('edit-profile')})
 app.get('/favicon.ico', function(req, res) {})
-app.post('/search-back'), function(req, res){
+app.post('/search'), function(req, res){
   var sess          = req.session
   var post          = req.body
   var sexe          = post.sex     //H F ou A
