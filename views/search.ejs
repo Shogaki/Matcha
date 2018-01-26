@@ -2,53 +2,62 @@
 <% include parts/header.ejs %>
 <div class="ui yellow center aligned segment" id="connexion-div">
   <div class="header">Recherche ton duo</div>
+  <form action="/search-back" method="post">
   <div class="center aligned">
   <div class="ui fields form">
     <br><br><label>Quel(s) genre(s) recherches tu ? :) </label><br>
-    <div class="inline fields middle" style="width:175px; margin:auto">
+    <div class="inline fields middle" style="width:200px; margin:auto">
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency" checked="checked">
+        <input type="checkbox" name="or_h" value=1>
         <label><i class="man icon"></i></label>
         </div>
       </div>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency">
+        <input type="checkbox" name="or_f" value=1>
         <label><i class="woman icon"></i></label>
         </div>
       </div>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency">
+        <input type="checkbox" name="or_a" value=1>
         <label><i class="other gender icon"></i></label>
     </div>
   </div>
+</div><br>
+Ajouter des Tags
+<br>
+<div class="ui right labeled left icon input">
+
+  <i class="tags icon"></i>
+  <input type="text" placeholder="#lainkapete #tuconnaiswankil" name="tags">
+  <a class="ui tag label">
+    #
+  </a>
 </div>
-les # que tu recherches
-<div class="ui search">
-  <input class="prompt center" type="text" placeholder="#jsussl1k #lainkapeté">
+<br><br>
+Oussa<br>
+<div class="ui search inline wide field">
+  <input class="prompt center" type="text" name="distMax" placeholder="Nombre de Km max">
   <div class="results"></div>
 </div>
-Oussa
+Quel popularité sur le site ?<br>
 <div class="ui search inline wide field">
-  <input class="prompt center" type="text" placeholder="Nombre de Km max">
-  <div class="results"></div>
-</div>
-Quel popularité sur le site ?
-<div class="ui search inline wide field">
-  <input class="prompt center" type="text" placeholder="point pop min">
+  <input class="prompt center" type="text" name="popMin" placeholder="point pop min">
   <div class="results"></div>
 </div>
 Quel ages ?
 <div class="fields center" style="width:300px;margin:auto">
 <div class="field">
-  <input class="prompt center" type="text" placeholder="15 a nn c tro jeun">
+  <input class="prompt center" type="text" name="ageMin" placeholder="15 a nn c tro jeun">
   <div class="results"></div>
 </div>
 <div class="field">
-  <input class="prompt center" type="text" placeholder="99 j m lé vieu">
+  <input class="prompt center" type="text" name="ageMax" placeholder="99 j m lé vieu">
   <div class="results"></div>
 </div>
-</div>
+</div><br>
+<input type="submit" class="ui primary button" value="🔍    Rechercher">
+</form>
 </div>
