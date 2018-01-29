@@ -8,6 +8,7 @@ var bodyParser        = require('body-parser')
 var mysql             = require('mysql')
 var iplocate          = require('node-iplocate')
 var faker             = require('faker');
+var passwordHash      = require('password-hash');
 var app               = express()
 var port              = 8081
 var con               = mysql.createConnection({
@@ -34,25 +35,28 @@ function deg2rad(x){
 function getRandominInterval(min, max) {
   return Math.random() * (max - min) + min;
 }
-function _ago(ago) {
+function _ago(status, ago) {
     var now = Math.floor(Date.now() / 1000);
+    ago = Date.parse(ago)/1000
     var diff = now - ago
-    if (diff < 60)
-      return (" depuis " + Math.floor(diff) + " seconde" + (diff < 2 ? "" : "s"))
+    if (status == 1 && diff < 600)
+      return ("✅  ")
+    else if (diff < 60)
+      return ("🔴 depuis " + Math.floor(diff) + " seconde" + (diff < 2 ? "" : "s"))
     else if (diff < 3600)
-      return (" depuis " + Math.floor(diff / 60) + " minute" + (diff < 120 ? "" : "s"))
+      return ("🔴 depuis " + Math.floor(diff / 60) + " minute" + (diff < 120 ? "" : "s"))
     else if (diff < 86400)
-      return (" depuis " + Math.floor(diff / 3600) + " heure" + (diff < 7200 ? "" : "s"))
+      return ("🔴 depuis " + Math.floor(diff / 3600) + " heure" + (diff < 7200 ? "" : "s"))
     else if (diff < 604800)
-      return (" depuis " + Math.floor(diff / 86400) + " jour" + (diff < 172800 ? "" : "s"))
+      return ("🔴 depuis " + Math.floor(diff / 86400) + " jour" + (diff < 172800 ? "" : "s"))
     else if (diff < 2592000)
-      return (" depuis " + Math.floor(diff / 604800) + " semaine" + (diff < 1209600 ? "" : "s"))
+      return ("🔴 depuis " + Math.floor(diff / 604800) + " semaine" + (diff < 1209600 ? "" : "s"))
     else if (diff < 31536000)
-      return (" depuis " + Math.floor(diff / 2592000) + " mois")
+      return ("🔴 depuis " + Math.floor(diff / 2592000) + " mois")
     else
-      return (" depuis " + Math.floor(diff / 31536000) + " an" + (diff < 63072000 ? "" : "s"))
+      return ("🔴 depuis " + Math.floor(diff / 31536000) + " an" + (diff < 63072000 ? "" : "s"))
 }
-function reset_status(id){
+function reset_status(id, latitude, longitude){
   var timeStamp = Math.floor(Date.now() / 1000);
   var sql       = "UPDATE `user` SET `status`= 1,`time`= CURRENT_TIMESTAMP WHERE id = " + id
   con.query(sql, function (err, result) {
@@ -67,6 +71,11 @@ function reset_status_disconnect(id){
     if (err)
       console.log(err)
   })
+}
+function dateDiff(birthday){
+  birthday = new Date(birthday);
+  return new Number((new Date().getTime() - birthday.getTime()) / 31536000000).toFixed(0);
+
 }
 function show_status(id){
   var timeStamp = Math.floor(Date.now() / 1000);
@@ -90,14 +99,13 @@ function escapeHtml(text) {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
 }
-function getFullLocation(){
+function getFullLocationandrender(res, page){
   http.get({'host': 'api.ipify.org', 'port': 80, 'path': '/'}, function(resp)
   {
     var ip = resp.on('data', function(ip)
     {
-      console.log("ip1 = " + ip)
       iplocate(ip).then((results) => {
-        return(results);
+        res.render(page, {long: results.longitude, lat:results.latitude})
       });
     });
   })
@@ -214,10 +222,8 @@ app.get('/', function(req, res) {
   sess = req.session
   if (sess.user_id)
     res.render('home')
-  else {
-    console.log("ip2 = " + getFullLocation())
-    res.render('connexion', {ip: getFullLocation()})
-  }
+  else
+    getFullLocationandrender(res, 'connexion')
 })
 app.get('/offline', function(req, res) {res.render('offline-home')})
 app.get('/profil/:username', function(req, res) {
@@ -244,10 +250,8 @@ app.get('/profil/:username', function(req, res) {
   })
 })
 app.get('/connexion', function(req, res){
-  res.render('connexion', {values: getFullLocation()})
+  getFullLocationandrender(res, 'connexion')
 })
-
-
 app.get('/test', function(req, res){res.render('visite')})
 app.get('/inscription', function(req, res){res.render('inscription')})
 app.get('/search', function(req, res){res.render('search')})
@@ -269,7 +273,7 @@ app.post('/search-back', function(req, res){
   if (or_a + or_f + or_h == 0)
     res.render('error', {error: 40})
   else {
-    var sql           = "SELECT DISTINCT user.login, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) dist FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE ("
+    var sql           = "SELECT DISTINCT user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) dist FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE ("
     if (or_h == 1)  {
       sql += (n != 0 ? " AND " : "") + " user.sexe = 1 "
       n++;
@@ -316,8 +320,21 @@ app.post('/search-back', function(req, res){
     }
     if (distMax != "" && !isNaN(distMax))
         sql += " HAVING DIST > " + distMax
-}
-  console.log(sql + " ORDER BY popularity DESC");
+    sql+= " ORDER BY popularity DESC, dist ASC LIMIT 1, 10"
+  }
+  console.log(sql);
+  con.query(sql, function (err, result) {
+    if (err) throw err
+    if (result.length == 0)
+      res.render('search')
+    else{
+    for (var j = 0; j < 10 && j < result.length; j++) {
+      console.log(result[j].login)
+      result[j].status = _ago(result[j].status, result[j].time)
+      result[j].birth_date = dateDiff(result[j].birth_date)
+    }
+    res.render('result-search', {values: result, initialdata: req.body, nbresult:result.length})
+  }})
 })
 app.post('/inscription-back',function(req,res){
   var sess          = req.session

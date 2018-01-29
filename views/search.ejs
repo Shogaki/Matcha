@@ -2,7 +2,7 @@
 <% include parts/header.ejs %>
 <div class="ui yellow center aligned segment" id="connexion-div">
   <div class="header">Recherche ton duo</div>
-  <form action="/search-back" method="post">
+  <form action="/search-back" method="post" id="search-form">
   <div class="center aligned">
   <div class="ui fields form">
     <br><br><label>Quel(s) genre(s) recherches tu ? :) </label><br>
@@ -47,7 +47,7 @@ Quel popularité sur le site ?<br>
   <input class="prompt center" type="text" name="popMin" placeholder="point pop min">
   <div class="results"></div>
 </div>
-Quel ages ?
+Quel age ?
 <div class="fields center" style="width:300px;margin:auto">
 <div class="field">
   <input class="prompt center" type="text" name="ageMin" placeholder="15 a nn c tro jeun">
@@ -57,6 +57,16 @@ Quel ages ?
   <input class="prompt center" type="text" name="ageMax" placeholder="99 j m lé vieu">
   <div class="results"></div>
 </div>
+</div>
+<div class="field compact" style="width:200px;margin:auto">
+  Tri par
+<select class="ui compact dropdown" form=search-form>
+  <option value="pop">Popularité</option>
+  <option value="dist">Distance</option>
+  <option value="age">age</option>
+</select>
+</div>
+
 </div><br>
 <input type="submit" class="ui primary button" value="🔍    Rechercher">
 </form>

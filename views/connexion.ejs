@@ -1,6 +1,8 @@
 <link href="/css/style.css" rel="stylesheet" type="text/css">
 <% include parts/header.ejs %>
 <title>Connexion</title>
+
+<script src="https://maps.google.com/maps/api/js?key=AIzaSyBwgRxtfHhxdYL6XVDQqfRSk_y5yNVffW0" type="text/javascript"></script>
 <br>
   <div id="connexion-div">
     <h1>Connexion</h1>
@@ -18,25 +20,34 @@
           <span class="bar"></span>
           <label class="input-label">Mot de passe</label>
         </div>
+        <input type=hidden name=latitude id=latitude value=<%= lat %>>
+        <input type=hidden name=longitude id=longitude value=<%= long %>>
+        <input type= name=city id=city>
         <input type="submit" value="Se connecter" name="connect" class="button" style="vertical-align:middle"></button>
       </form>
     </div>
     <script>
     function maPosition(position){
-      var infopos = "Latitude: "+position.coords.latitude +"\n";
-          infopos +="Longitude: "+position.coords.longitude+"\n";
-      document.getElementById("infoposition").innerHTML = infopos;
+      document.getElementById("latitude").value = position.coords.latitude;
+      document.getElementById("longitude").value = position.coords.longitude;
+      var latLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+      new google.maps.Geocoder().geocode({"latLng": latLng}, function(results, status) {
+          console.log(results[0].address_components[2].long_name + " " + results[0].address_components[6].long_name)
+          document.querySelector("#city").value = results[0].address_components[2].long_name + " " + results[0].address_components[6].long_name;
+      });
     }
     function error()
     {
-
+      var latLng = new google.maps.LatLng(<%= lat %>, <%= long %>);
+      new google.maps.Geocoder().geocode({"latLng": latLng}, function(results, status) {
+          console.log(results[0].address_components[2].long_name)
+          document.querySelector("#city").value = results[0].address_components[2].long_name;
+      });
     }
-
     if(navigator.geolocation)
     {
       navigator.geolocation.getCurrentPosition(maPosition, error);
     }
     </script>
-      <div id="infoposition"></div>
     </body>
     </html>
