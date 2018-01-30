@@ -27,6 +27,7 @@
     "node": "^9.3.0",
     "node-iplocate": "^1.0.1",
     "node.js": "0.0.0",
+    "nodemailer": "^4.4.2",
     "passport": "^0.4.0",
     "password-hash": "^1.2.2",
     "qs": "^6.5.1",

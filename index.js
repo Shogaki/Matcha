@@ -1,4 +1,5 @@
 var express           = require('express')
+const fs              = require('fs');
 var http              = require('http')
 var parseurl          = require('parseurl')
 var cookieParser      = require('cookie-parser')
@@ -9,6 +10,7 @@ var mysql             = require('mysql')
 var iplocate          = require('node-iplocate')
 var faker             = require('faker');
 var passwordHash      = require('password-hash');
+const nodemailer      = require('nodemailer');
 var app               = express()
 var port              = 8081
 var con               = mysql.createConnection({
@@ -128,14 +130,16 @@ function addRandomTags(id){
 }
 function addFakeAccounts(nb){
   var n = 0;
-
+  var fake_img = [fs.readdirSync('public/wankuls/other'), fs.readdirSync('public/wankuls/homme'), fs.readdirSync('public/wankuls/femme')]
   faker.locale = "fr";
   while (n <= nb)
   {
+    var sexe      = faker.random.number({min:0, max:2});
+    var img1      = fake_img[sexe][faker.random.number({min:0, max:fake_img[sexe].length})]
     var password  = faker.internet.password(8, true);
-    faker.locale = "en";
-    var prenom    = faker.name.firstName(0);
-    faker.locale = "fr";
+    faker.locale  = "en";
+    var prenom    = faker.name.firstName(sexe == 1 ? 'male' : (sexe == 2 ? 'female' : ''))
+    faker.locale  = "fr";
     var nom       = faker.name.lastName(0);
     var login     = faker.internet.userName(prenom, nom);
     var birthdate = faker.date.between('1945-01-01', '1999-12-31').toISOString().slice(0, 19).replace('T', ' ');
@@ -145,15 +149,14 @@ function addFakeAccounts(nb){
     var lat       = getRandominInterval(41.3565587, 50.545468);
     var long      = getRandominInterval(-5.235884, 9.567371);
     var city      = faker.address.city()
-    var sexe      = faker.random.number({min:0, max:2});
     var bio       = faker.lorem.paragraph();
     var email     = faker.internet.email(prenom, nom);
     var popularity= faker.random.number({min:40, max:1500});
     var status    = 0;
     var unlogged  = faker.date.recent(360).toISOString().slice(0, 19).replace('T', ' ');
-    var values = "'" + login + "', '" + password + "', '" + prenom + "', '" + nom + "', '" + birthdate + "', " + (or_h ? 1 : 0) + ", " + (or_f ? 1 : 0) + ", "
+    var values = "'" + login + "', '" + img1 + "', '" + password + "', '" + prenom + "', '" + nom + "', '" + birthdate + "', " + (or_h ? 1 : 0) + ", " + (or_f ? 1 : 0) + ", "
     values += (or_a ? 1 : 0) + ", " +  long + ", " + lat + ", '" +  city + "', " + sexe + ", '" + bio + "', '" + email + "', " + popularity + ", " + status + ", '" + unlogged + "')"
-    sql = "INSERT INTO `user` (`login`, `password`, `prenom`, `nom`, `birth_date`, `or_h`, `or_f`, `or_a`, `longitude`, `latitude`, `ville`, `sexe`, `bio`, `email`, `popularity`, `status`,`time`) VALUES ("
+    sql = "INSERT INTO `user` (`login`, `img1`, `password`, `prenom`, `nom`, `birth_date`, `or_h`, `or_f`, `or_a`, `longitude`, `latitude`, `ville`, `sexe`, `bio`, `email`, `popularity`, `status`,`time`) VALUES ("
     if(prenom != "angelo")
     {
       con.query(sql + values, function (err, result){
@@ -166,6 +169,43 @@ function addFakeAccounts(nb){
     }
   }
 }
+function vote(src, dest, value){
+  var sql = ('SELECT id, value FROM vote WHERE id_src = ' + src + ' AND id_dst = ' + dest)
+  con.query(sql, function (err, result) {
+    if (err)
+      console.log(err);
+    if (result.length != 0){
+      if (result[0].value != value){
+        var value_old = result[0].value
+        console.log('DELETE FROM `vote` WHERE id_src = ' + src + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value)
+        con.query('DELETE FROM `vote` WHERE id_src = ' + src + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value, function (err, result) {
+          console.log('UPDATE `user` SET `popularity`=`popularity` - ' + value_old + ' WHERE `id` = ' + dest)
+          con.query('UPDATE `user` SET `popularity`=`popularity` - ' + value_old + ' WHERE `id` = ' + dest);
+        })
+      }
+    }
+    if (result.length == 0 || result[0].value != value)
+    con.query("INSERT INTO `vote`(`id_src`, `id_dst`, `value`) VALUES (" + src + ", " + dest + "," + value + ")", function(err, result){
+      con.query('UPDATE `user` SET `popularity`=`popularity` + ' + value + ' WHERE `id` = ' + dest);
+    })
+  })
+}
+function send_mail(from, to, subject, text){
+    let transporter = nodemailer.createTransport({
+        sendmail: true,
+        newline: 'unix',
+        path: '/usr/sbin/sendmail'
+    });
+    transporter.sendMail({
+        from: from,
+        to: to,
+        subject: subject,
+        text: text
+    }, (err, info) => {
+        console.log(info.envelope);
+        console.log(info.messageId);
+    });
+};
 
 app.get('/install', function (req, res){
   console.log("⚙️  | Starting installation ")
@@ -217,6 +257,7 @@ app.get('/addfakeaccount/:nb', function(req, res) {
   addFakeAccounts(req.params.nb)
 })
 
+vote(1, 2, -1)
 // FRONT
 app.get('/', function(req, res) {
   sess = req.session
