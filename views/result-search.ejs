@@ -2,7 +2,7 @@
 <% include parts/header.ejs %>
 <div class="ui yellow center aligned segment" id="connexion-div">
   <div class="header">Recherche ton duo</div>
-  <form action="/search-back" method="post">
+  <form action="/search-back" method="post" id=search-form >
   <div class="center aligned">
   <div class="ui fields form">
     <br><br><label>Quel(s) genre(s) recherches tu ? :) </label><br>
@@ -59,7 +59,7 @@ Quel age ?
 </div></div>
 <div class="field compact" style="width:150px;margin:auto">
   Tri par
-<select class="ui compact dropdown" form=search-form>
+<select class="ui compact dropdown" form=search-form name=sort>
   <option value="pop">Popularité</option>
   <option value="dist">Distance</option>
   <option value="age">age</option>

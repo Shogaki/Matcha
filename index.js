@@ -269,11 +269,13 @@ app.post('/search-back', function(req, res){
   var popMin        = parseInt(post.popMin);
   var distMax       = post.distMax
   var n             = 0;
+  var sort          = post.sort;
+  console.log(post)
   var tags          = post.tags.replace(/[ ]*/g, '').substr(1).split('#')
-  if (or_a + or_f + or_h == 0)
-    res.render('error', {error: 40})
-  else {
-    var sql           = "SELECT DISTINCT user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) dist FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE ("
+  var sql           = "SELECT DISTINCT user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) dist FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE "
+  if (or_h + or_f + or_a != 0)
+  {
+    sql+="("
     if (or_h == 1)  {
       sql += (n != 0 ? " AND " : "") + " user.sexe = 1 "
       n++;
@@ -287,41 +289,48 @@ app.post('/search-back', function(req, res){
       n++;
     }
     sql += ")"
-    if (ageMin != "" && ageMax != "")
-    {
-      var birthdateMin  = new Date();
-      var birthdateMax  = new Date();
-      birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
-      birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
-      sql += " AND (birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
-    }
-    else if (ageMin == "" && ageMax != "")
-    {
-      var birthdateMin  = new Date();
-      birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
-      sql += " AND (birth_date >= '" + birthdateMin.toISOString().substring(0, 10) + "')"
-    }
-    else if (ageMin != "" && ageMax == "")
-    {
-      var birthdateMax  = new Date();
-      birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
-      sql += " AND (birth_date <= '" + birthdateMax.toISOString().substring(0, 10) + "')"
-    }
-    if (!isNaN(popMin))  {
-      sql += (n != 0 ? " AND " : "") + " user.popularity > " + popMin
-      n++;
-    }
-    if (post.tags != "")
-    {
-      tags.forEach(function(element) {
-        sql += (n != 0 ? " AND " : "") + "tags.name = '" + element + "'"
-        n++;
-      });
-    }
-    if (distMax != "" && !isNaN(distMax))
-        sql += " HAVING DIST > " + distMax
-    sql+= " ORDER BY popularity DESC, dist ASC LIMIT 1, 10"
   }
+  if (ageMin != "" && ageMax != "")
+  {
+    var birthdateMin  = new Date();
+    var birthdateMax  = new Date();
+    birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
+    birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
+    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
+  }
+  else if (ageMin == "" && ageMax != "")
+  {
+    var birthdateMin  = new Date();
+    birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
+    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date >= '" + birthdateMin.toISOString().substring(0, 10) + "')"
+  }
+  else if (ageMin != "" && ageMax == "")
+  {
+    var birthdateMax  = new Date();
+    birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
+    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date <= '" + birthdateMax.toISOString().substring(0, 10) + "')"
+  }
+  if (!isNaN(popMin))  {
+    sql += (or_h + or_f + or_a != 0 || ageMin != "" || ageMax != "" ?  " AND " : "") + " user.popularity > " + popMin
+    n++;
+  }
+  if (post.tags != "")
+  {
+    tags.forEach(function(element) {
+      sql += (or_h + or_f + or_a != 0 || ageMin != "" || ageMax != "" || !isNaN(popMin) ? " AND " : "") + "tags.name = '" + element + "'"
+      n++;
+    });
+  }
+  if ((or_h + or_f + or_a == 0 && ageMin == "" && ageMax == "" && isNaN(popMin) && post.tags == ""))
+    sql += "1"
+  if (distMax != "" && !isNaN(distMax))
+    sql += " HAVING DIST > " + distMax
+  if (sort == "pop")
+    sql+= " ORDER BY popularity DESC, dist ASC, birth_date DESC"
+  else if (sort == "age")
+    sql+=" ORDER BY birth_date DESC, popularity DESC, dist ASC"
+  else if (sort == "dist")
+    sql+=" ORDER BY dist ASC, popularity DESC, birth_date DESC"
   console.log(sql);
   con.query(sql, function (err, result) {
     if (err) throw err
