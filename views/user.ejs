@@ -3,12 +3,12 @@
     <div class="ui celled grid">
         <div class="row">
           <div class="three wide column">
-            <img class="ui large circular image" src="/wankuls/zpim678X.png">
+            <img class="ui large circular image" src=<%= (value.img1 ? value.img1 :  "/wankuls/zpim678X.png") %>>
             <div class="ui middle aligned segment">
-              <img class="ui mini middle aligned image" src="/wankuls/zpim678X.png">
-              <img class="ui mini middle aligned image" src="/wankuls/zpim678X.png">
-              <img class="ui mini middle aligned image" src="/wankuls/zpim678X.png">
-              <img class="ui mini middle aligned image" src="/wankuls/zpim678X.png">
+              <img class="ui mini middle aligned image" src= <%= (value.img2 ? value.img2 :  "/wankuls/zpim678X.png") %>>
+              <img class="ui mini middle aligned image" src= <%= (value.img3 ? value.img3 :  "/wankuls/zpim678X.png") %>>
+              <img class="ui mini middle aligned image" src= <%= (value.img4 ? value.img4 :  "/wankuls/zpim678X.png") %>>
+              <img class="ui mini middle aligned image" src= <%= (value.img5 ? value.img5 :  "/wankuls/zpim678X.png") %>>
             </div>
           </div>
           <div class="thirteen wide column">
@@ -22,7 +22,7 @@
             <p>Age : </p>
           </div>
           <div class="ui left compact yellow segment">
-            <p>Sex :  </p>
+            <p>Sexe :  </p>
           </div>
           <div class="ui right compact yellow segment">
             <p>Préférence de genres :  </p>
@@ -47,13 +47,26 @@
         </div>
         </div>
       </div>
-
       <div class="three wide column">
         <div class="ui center aligned segment">
-          <button class="ui red button">Match</button>
-          <button class="ui grey button">Next</button>
+          <button id=like class="ui red button">Like</button>
+          <button id=dislike class="ui grey button">Next</button>
         </div>
       </div>
     </div>
     </div>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io.connect('http://localhost:8081');
+      socket.emit('init', <%= id %>)
+      $('#like').click(function () {
+        socket.emit('vote', 1, <%= value.id %>);
+        console.log("ISSOU")
+      })
+      $('#dislike').click(function () {
+        socket.emit('vote', -1, <%= value.id %>);
+        console.log("ISSOU")
+      })
+      </script>
   </div>

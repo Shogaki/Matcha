@@ -1,3 +1,5 @@
+//INITIAL CONFIGURATION
+
 var express           = require('express')
 const fs              = require('fs');
 var http              = require('http')
@@ -19,6 +21,9 @@ var con               = mysql.createConnection({
   password:"123456",
   database:"matcha"
 })
+server = require('http').createServer(app),
+    io = require('socket.io').listen(server),
+    ent = require('ent')
 con.connect(function(err) {
   if (err) throw err
   console.log("✅  | Base de donnée OK")
@@ -113,15 +118,15 @@ function getFullLocationandrender(res, page){
   })
 }
 function addRandomTags(id){
-  sql = 'SELECT (count(id)) AS Nb FROM tags WHERE 1 < 2'
-  con.query(sql, function (err, result){
+  sql2 = 'SELECT (count(id)) AS Nb FROM tags WHERE 1 < 2'
+  con.query(sql2, function (err, result){
     tags_nb = result[0].Nb;
     n = getRandominInterval(2, 6)
     i = 0
     while (i < n)
     {
-      sql = "INSERT INTO `user_tag`(`id_tag`, `id_user`) VALUES (" + Math.round(getRandominInterval(0, tags_nb)) + ", " + id + ")"
-      con.query(sql, function (err, result) {
+      sql2 = "INSERT INTO `user_tag`(`id_tag`, `id_user`) VALUES (" + Math.round(getRandominInterval(0, tags_nb)) + ", " + id + ")"
+      con.query(sql3, function (err, result) {
       })
       i++;
     }
@@ -135,7 +140,7 @@ function addFakeAccounts(nb){
   while (n <= nb)
   {
     var sexe      = faker.random.number({min:0, max:2});
-    var img1      = fake_img[sexe][faker.random.number({min:0, max:fake_img[sexe].length})]
+    var img1      = (sexe == 1 ? 'public/wankuls/homme/' : (sexe == 2 ? 'public/wankuls/femme/' : 'public/wankuls/other/')) + fake_img[sexe][faker.random.number({min:0, max:fake_img[sexe].length})]
     var password  = faker.internet.password(8, true);
     faker.locale  = "en";
     var prenom    = faker.name.firstName(sexe == 1 ? 'male' : (sexe == 2 ? 'female' : ''))
@@ -177,9 +182,7 @@ function vote(src, dest, value){
     if (result.length != 0){
       if (result[0].value != value){
         var value_old = result[0].value
-        console.log('DELETE FROM `vote` WHERE id_src = ' + src + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value)
         con.query('DELETE FROM `vote` WHERE id_src = ' + src + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value, function (err, result) {
-          console.log('UPDATE `user` SET `popularity`=`popularity` - ' + value_old + ' WHERE `id` = ' + dest)
           con.query('UPDATE `user` SET `popularity`=`popularity` - ' + value_old + ' WHERE `id` = ' + dest);
         })
       }
@@ -189,6 +192,7 @@ function vote(src, dest, value){
       con.query('UPDATE `user` SET `popularity`=`popularity` + ' + value + ' WHERE `id` = ' + dest);
     })
   })
+  console.log("vote")
 }
 function send_mail(from, to, subject, text){
     let transporter = nodemailer.createTransport({
@@ -206,7 +210,20 @@ function send_mail(from, to, subject, text){
         console.log(info.messageId);
     });
 };
+// SOCKETS
+io.sockets.on('connection', function (socket, id) {
+  socket.on('init', function(id) {
+    id = parseInt(id);
+    socket.id = id;
+});
+  socket.on('vote', function (value, dest) {
+    vote(socket.id, dest, value)
+    console.log("VOTE")
+  });
+});
 
+
+// ROUTING
 app.get('/install', function (req, res){
   console.log("⚙️  | Starting installation ")
   console.log("⚙️  | Tags creation ")
@@ -256,47 +273,56 @@ app.get('/install', function (req, res){
 app.get('/addfakeaccount/:nb', function(req, res) {
   addFakeAccounts(req.params.nb)
 })
-
-vote(1, 2, -1)
-// FRONT
 app.get('/', function(req, res) {
   sess = req.session
   if (sess.user_id)
     res.render('home')
   else
-    getFullLocationandrender(res, 'connexion')
+    res.redirect('/connexion')
 })
 app.get('/offline', function(req, res) {res.render('offline-home')})
 app.get('/profil/:username', function(req, res) {
-  sql = "SELECT id, login, prenom, nom, sexe, or_h, or_f, or_a, bio, popularity, status, UNIX_TIMESTAMP(time) AS time FROM user WHERE login = '" + escapeHtml(req.params.username) + "'"
-  con.query(sql, function (err, result) {
-    if (!result)
-      res.render('error', {error: 31})
-    else if (result.length == 1){
-      if (result[0].status == 0)
-        result[0].time = _ago(result[0].time)
-      else if (result[0].time + 600 < (Math.floor(Date.now() / 1000)))
-      {
-        result[0].status = 0;
-        result[0].time = _ago(result[0].time)
+  if (req.session.user_id != undefined)
+  {
+    sql = "SELECT id, login, prenom, nom, sexe, or_h, or_f, or_a, bio, popularity, status, UNIX_TIMESTAMP(time) AS time, img1, img2, img3, img4, img5 FROM user WHERE login = '" + escapeHtml(req.params.username) + "'"
+    con.query(sql, function (err, result) {
+      if (!result)
+        res.render('error', {error: 31})
+      else if (result.length == 1){
+        if (result[0].status == 0)
+          result[0].time = _ago(result[0].time)
+        else if (result[0].time + 600 < (Math.floor(Date.now() / 1000)))
+        {
+          result[0].status = 0;
+          result[0].time = _ago(result[0].time)
+        }
+        res.render('user', {value: result[0], id: sess.user_id})
       }
-      res.render('user', {value: result[0]})
-    }
-    else if (result.length == 0){
-      res.render('error', {error: 31})
-    }
-    else {
-      res.render('error', {error: 30})
-    }
-  })
+      else if (result.length == 0){
+        res.render('error', {error: 31})
+      }
+      else {
+        res.render('error', {error: 30})
+      }
+    })
+  }
+  else
+    res.redirect('/connexion')
 })
 app.get('/connexion', function(req, res){
   getFullLocationandrender(res, 'connexion')
 })
-app.get('/test', function(req, res){res.render('visite')})
-app.get('/inscription', function(req, res){res.render('inscription')})
-app.get('/search', function(req, res){res.render('search')})
-app.get('/edit-profile', function(req, res){res.render('edit-profile')})
+app.get('/test', function(req, res){
+  res.render('visite')
+})
+app.get('/inscription', function(req, res){
+  res.render('inscription')})
+app.get('/search', function(req, res){
+  res.render('search')
+})
+app.get('/edit-profile', function(req, res){
+  res.render('edit-profile')
+})
 app.get('/favicon.ico', function(req, res) {})
 app.post('/search-back', function(req, res){
   var sess          = req.session
@@ -433,6 +459,8 @@ app.post('/inscription-back',function(req,res){
               con.query(sql, [values], function (err, result) {
                 if (err) throw err
                 console.log("😀  | " + pseudo + " a créé un compte")
+                req.session.user_id = result.insertId
+                res.redirect('/')
               })
             }
           })
@@ -488,7 +516,9 @@ app.get('/logout',function(req,res){
 })
 
 //A LAISSER EN DERNIER
-app.listen(port)
-app.use(function(req, res, next){ res.render('404')})
+
+app.use(function(req, res, next){
+  res.render('404')})
+server.listen(port)
 console.log("✅  | Serveur HTTP OK")
 console.log("✅  | Port " + port)
