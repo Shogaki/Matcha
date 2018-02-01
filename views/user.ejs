@@ -3,7 +3,7 @@
     <div class="ui celled grid">
         <div class="row">
           <div class="three wide column">
-            <img class="ui large circular image" src=<%= (value.img1 ? value.img1 :  "/wankuls/zpim678X.png") %>>
+            <img class="ui large circular image" src=<%= (value.img1 ? value.img1 : "/wankuls/zpim678X.png") %>>
             <div class="ui middle aligned segment">
               <img class="ui mini middle aligned image" src= <%= (value.img2 ? value.img2 :  "/wankuls/zpim678X.png") %>>
               <img class="ui mini middle aligned image" src= <%= (value.img3 ? value.img3 :  "/wankuls/zpim678X.png") %>>
@@ -12,34 +12,41 @@
             </div>
           </div>
           <div class="thirteen wide column">
-            <div class="ui yellow inverted center aligned segment">USERNAME NOM PREMOM </div>
+            <div class="ui yellow inverted center aligned segment"><%= value.login %> <%=value.prenom %> <%=value.nom%> </div>
             <div class="ui two column grid">
               <div class="column">
                 <div class="ui right compact green segment">
-                  <p>Status de connection :  </p>
+                  <p><%= value.time %></p>
                 </div>
             <div class="ui compact yellow segment">
-            <p>Age : </p>
+            <p>Age : <%= value.birth_date %> ans</p>
           </div>
           <div class="ui left compact yellow segment">
-            <p>Sexe :  </p>
+            <p>Sexe : <%= (value.sexe == 1 ? "Homme" : (value.sexe == 2 ? "Femme" : "Autre"))%> </p>
           </div>
           <div class="ui right compact yellow segment">
-            <p>Préférence de genres :  </p>
+            <p>Préférence de genres : <% if (value.or_h == 1) {%>
+              <i class="man icon"></i>
+              <% }if (value.or_f == 1) {%>
+              <i class="woman icon"></i>
+              <% }if (value.or_a == 1) {%>
+              <i class="other gender icon"></i>
+            <% } %>
+             </p>
           </div>
           <div class="ui right compact yellow segment">
-            <p>Geolocalisation :  </p>
+            <p>Geolocalisation : <%= value.dist %> km (<%= value.ville %>)</p>
           </div>
         </div>
         <div class="column">
             <p><div class="ui right compact yellow segment">
-              <h4 class="ui header">Hashtag :</h4>
+              <h4 class="ui header">Tags :</h4>
               <p>#pute #salope #alkapote</p>
             </div></p>
             <div class="column">
                 <p><div class="ui right compact yellow segment">
                   <h4 class="ui header">Description</h4>
-                  <p>Te eum doming eirmod, nominati pertinacia argumentum ad his. Ex eam alia facete scriptorem, est autem aliquip detraxit at. Usu ocurreret referrentur at, cu epicurei appellantur vix. Cum ea laoreet recteque electram, eos choro alterum definiebas in. Vim dolorum definiebas an. Mei ex natum rebum iisque.</p>
+                  <p><%= value.bio %></p>
                 </div></p>
                 </div>
             </div>
@@ -49,8 +56,11 @@
       </div>
       <div class="three wide column">
         <div class="ui center aligned segment">
-          <button id=like class="ui red button">Like</button>
-          <button id=dislike class="ui grey button">Next</button>
+        <% if (matched == 0){%>
+          <button id=like class='ui red button'>Like</button><button id=dislike class='ui grey button'>Next</button>
+          <% } else {%>
+            <button class="negative ui button">It's a Match !</button>
+            <% } %>
         </div>
       </div>
     </div>
@@ -61,12 +71,10 @@
       var socket = io.connect('http://localhost:8081');
       socket.emit('init', <%= id %>)
       $('#like').click(function () {
-        socket.emit('vote', 1, <%= value.id %>);
-        console.log("ISSOU")
+        socket.emit('vote', <%= value.id %>, 1);
       })
       $('#dislike').click(function () {
-        socket.emit('vote', -1, <%= value.id %>);
-        console.log("ISSOU")
+        socket.emit('vote', <%= value.id %>,-1);
       })
       </script>
   </div>

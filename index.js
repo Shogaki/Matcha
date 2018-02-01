@@ -13,6 +13,8 @@ var iplocate          = require('node-iplocate')
 var faker             = require('faker');
 var passwordHash      = require('password-hash');
 const nodemailer      = require('nodemailer');
+var EventEmitter      = require('events').EventEmitter;
+var ev                = new EventEmitter();
 var app               = express()
 var port              = 8081
 var con               = mysql.createConnection({
@@ -43,27 +45,28 @@ function getRandominInterval(min, max) {
   return Math.random() * (max - min) + min;
 }
 function _ago(status, ago) {
+  console.log(ago)
     var now = Math.floor(Date.now() / 1000);
     ago = Date.parse(ago)/1000
     var diff = now - ago
     if (status == 1 && diff < 600)
-      return ("✅  ")
+      return ("✅  Connecté")
     else if (diff < 60)
-      return ("🔴 depuis " + Math.floor(diff) + " seconde" + (diff < 2 ? "" : "s"))
+      return ("🔴 Déconnecté depuis " + Math.floor(diff) + " seconde" + (diff < 2 ? "" : "s"))
     else if (diff < 3600)
-      return ("🔴 depuis " + Math.floor(diff / 60) + " minute" + (diff < 120 ? "" : "s"))
+      return ("🔴 Déconnecté depuis " + Math.floor(diff / 60) + " minute" + (diff < 120 ? "" : "s"))
     else if (diff < 86400)
-      return ("🔴 depuis " + Math.floor(diff / 3600) + " heure" + (diff < 7200 ? "" : "s"))
+      return ("🔴 Déconnecté depuis " + Math.floor(diff / 3600) + " heure" + (diff < 7200 ? "" : "s"))
     else if (diff < 604800)
-      return ("🔴 depuis " + Math.floor(diff / 86400) + " jour" + (diff < 172800 ? "" : "s"))
+      return ("🔴 Déconnecté depuis " + Math.floor(diff / 86400) + " jour" + (diff < 172800 ? "" : "s"))
     else if (diff < 2592000)
-      return ("🔴 depuis " + Math.floor(diff / 604800) + " semaine" + (diff < 1209600 ? "" : "s"))
+      return ("🔴 Déconnecté depuis " + Math.floor(diff / 604800) + " semaine" + (diff < 1209600 ? "" : "s"))
     else if (diff < 31536000)
-      return ("🔴 depuis " + Math.floor(diff / 2592000) + " mois")
+      return ("🔴 Déconnecté depuis " + Math.floor(diff / 2592000) + " mois")
     else
-      return ("🔴 depuis " + Math.floor(diff / 31536000) + " an" + (diff < 63072000 ? "" : "s"))
+      return ("🔴 Déconnecté depuis " + Math.floor(diff / 31536000) + " an" + (diff < 63072000 ? "" : "s"))
 }
-function reset_status(id, latitude, longitude){
+function reset_status(id){
   var timeStamp = Math.floor(Date.now() / 1000);
   var sql       = "UPDATE `user` SET `status`= 1,`time`= CURRENT_TIMESTAMP WHERE id = " + id
   con.query(sql, function (err, result) {
@@ -118,14 +121,14 @@ function getFullLocationandrender(res, page){
   })
 }
 function addRandomTags(id){
-  sql2 = 'SELECT (count(id)) AS Nb FROM tags WHERE 1 < 2'
+  var sql2 = 'SELECT (count(id)) AS Nb FROM tags WHERE 1 < 2'
   con.query(sql2, function (err, result){
     tags_nb = result[0].Nb;
     n = getRandominInterval(2, 6)
     i = 0
     while (i < n)
     {
-      sql2 = "INSERT INTO `user_tag`(`id_tag`, `id_user`) VALUES (" + Math.round(getRandominInterval(0, tags_nb)) + ", " + id + ")"
+      var sql3 = "INSERT INTO `user_tag`(`id_tag`, `id_user`) VALUES (" + Math.round(getRandominInterval(0, tags_nb)) + ", " + id + ")"
       con.query(sql3, function (err, result) {
       })
       i++;
@@ -140,7 +143,7 @@ function addFakeAccounts(nb){
   while (n <= nb)
   {
     var sexe      = faker.random.number({min:0, max:2});
-    var img1      = (sexe == 1 ? 'public/wankuls/homme/' : (sexe == 2 ? 'public/wankuls/femme/' : 'public/wankuls/other/')) + fake_img[sexe][faker.random.number({min:0, max:fake_img[sexe].length})]
+    var img1      = (sexe == 1 ? '/wankuls/homme/' : (sexe == 2 ? '/wankuls/femme/' : '/wankuls/other/')) + fake_img[sexe][faker.random.number({min:0, max:fake_img[sexe].length - 1})]
     var password  = faker.internet.password(8, true);
     faker.locale  = "en";
     var prenom    = faker.name.firstName(sexe == 1 ? 'male' : (sexe == 2 ? 'female' : ''))
@@ -156,7 +159,7 @@ function addFakeAccounts(nb){
     var city      = faker.address.city()
     var bio       = faker.lorem.paragraph();
     var email     = faker.internet.email(prenom, nom);
-    var popularity= faker.random.number({min:40, max:1500});
+    var popularity= faker.random.number({min:40, max:1400});
     var status    = 0;
     var unlogged  = faker.date.recent(360).toISOString().slice(0, 19).replace('T', ' ');
     var values = "'" + login + "', '" + img1 + "', '" + password + "', '" + prenom + "', '" + nom + "', '" + birthdate + "', " + (or_h ? 1 : 0) + ", " + (or_f ? 1 : 0) + ", "
@@ -167,19 +170,23 @@ function addFakeAccounts(nb){
       con.query(sql + values, function (err, result){
         if (!(typeof result == "undefined" || result == null))
           addRandomTags(result.insertId);
-        else
-          console.log(sql + values);
       })
       n++;
     }
   }
+}
+function visit(src, dest)
+{
+  sql = "INSERT INTO `visite`(`id_visiteur`, `id_visite`) VALUES (" + src + " ," + dest + ")"
+  con.query(sql, function(err, result){
+  })
 }
 function vote(src, dest, value){
   var sql = ('SELECT id, value FROM vote WHERE id_src = ' + src + ' AND id_dst = ' + dest)
   con.query(sql, function (err, result) {
     if (err)
       console.log(err);
-    if (result.length != 0){
+    if (result[0] || result.length != 0){
       if (result[0].value != value){
         var value_old = result[0].value
         con.query('DELETE FROM `vote` WHERE id_src = ' + src + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value, function (err, result) {
@@ -192,7 +199,6 @@ function vote(src, dest, value){
       con.query('UPDATE `user` SET `popularity`=`popularity` + ' + value + ' WHERE `id` = ' + dest);
     })
   })
-  console.log("vote")
 }
 function send_mail(from, to, subject, text){
     let transporter = nodemailer.createTransport({
@@ -216,12 +222,11 @@ io.sockets.on('connection', function (socket, id) {
     id = parseInt(id);
     socket.id = id;
 });
-  socket.on('vote', function (value, dest) {
+  socket.on('vote', function (dest, value) {
+    console.log(socket.id)
     vote(socket.id, dest, value)
-    console.log("VOTE")
   });
 });
-
 
 // ROUTING
 app.get('/install', function (req, res){
@@ -238,8 +243,7 @@ app.get('/install', function (req, res){
     ['lol'],
     ['minecraft'],
     ['lunette'],
-    ['triste'],
-    ['suicide'],
+    ['tacos'],
     ['siphano'],
     ['plante'],
     ['ecologie'],
@@ -252,7 +256,7 @@ app.get('/install', function (req, res){
     ['lolita'],
     ['starwars'],
     ['netflix'],
-    ['strmwood'],
+    ['banane'],
     ['vinyle'],
     ['aspirateur'],
     ['corobizar'],
@@ -268,7 +272,19 @@ app.get('/install', function (req, res){
       console.log("✅  | 1500 fake users created")
       console.log("✅  | Installation Done")
     });
-
+    res.redirect('/');
+})
+app.get('/yesiamsureiwanttoresetthedatabase', function (req, res)
+{
+  con.query('TRUNCATE TABLE `blacklist`');
+  con.query('TRUNCATE TABLE `message`');
+  con.query('TRUNCATE TABLE `report`');
+  con.query('TRUNCATE TABLE `tags`');
+  con.query('TRUNCATE TABLE `user`');
+  con.query('TRUNCATE TABLE `user_tag`');
+  con.query('TRUNCATE TABLE `visite`');
+  con.query('TRUNCATE TABLE `vote`');
+  res.redirect('/install');
 })
 app.get('/addfakeaccount/:nb', function(req, res) {
   addFakeAccounts(req.params.nb)
@@ -284,22 +300,25 @@ app.get('/offline', function(req, res) {res.render('offline-home')})
 app.get('/profil/:username', function(req, res) {
   if (req.session.user_id != undefined)
   {
-    sql = "SELECT id, login, prenom, nom, sexe, or_h, or_f, or_a, bio, popularity, status, UNIX_TIMESTAMP(time) AS time, img1, img2, img3, img4, img5 FROM user WHERE login = '" + escapeHtml(req.params.username) + "'"
+    sql = "SELECT id, login, prenom, ville, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) AS dist, nom, sexe, or_h, or_f, or_a, bio, popularity, status, time, img1, img2, img3, img4, img5, birth_date FROM user WHERE login = '" + escapeHtml(req.params.username) + "'"
     con.query(sql, function (err, result) {
       if (!result)
         res.render('error', {error: 31})
-      else if (result.length == 1){
-        if (result[0].status == 0)
-          result[0].time = _ago(result[0].time)
-        else if (result[0].time + 600 < (Math.floor(Date.now() / 1000)))
-        {
-          result[0].status = 0;
-          result[0].time = _ago(result[0].time)
+      else if (result.length == 1)
+      {
+        visit(sess.user_id, result[0].id)
+          result[0].birth_date = dateDiff(result[0].birth_date)
+          result[0].time = _ago(result[0].status, result[0].time)
+          var sql = "SELECT count(*) as nb FROM `vote` as `vote1`  LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = " + result[0].id + " AND vote2.id_src = " + req.session.user_id
+          con.query(sql, function (err, result2) {
+            if (result2[0].nb == 0)
+              res.render('user', {value: result[0], id: sess.user_id, matched:0})
+            else
+              res.render('user', {value: result[0], id: sess.user_id, matched:1})
+          })
         }
-        res.render('user', {value: result[0], id: sess.user_id})
-      }
-      else if (result.length == 0){
-        res.render('error', {error: 31})
+        else if (result.length == 0){
+          res.render('error', {error: 31})
       }
       else {
         res.render('error', {error: 30})
@@ -337,9 +356,8 @@ app.post('/search-back', function(req, res){
   var distMax       = post.distMax
   var n             = 0;
   var sort          = post.sort;
-  console.log(post)
   var tags          = post.tags.replace(/[ ]*/g, '').substr(1).split('#')
-  var sql           = "SELECT DISTINCT user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) dist FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE "
+  var sql           = "SELECT DISTINCT user.id, user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) dist, img1 FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE "
   if (or_h + or_f + or_a != 0)
   {
     sql+="("
@@ -398,14 +416,12 @@ app.post('/search-back', function(req, res){
     sql+=" ORDER BY birth_date DESC, popularity DESC, dist ASC"
   else if (sort == "dist")
     sql+=" ORDER BY dist ASC, popularity DESC, birth_date DESC"
-  console.log(sql);
   con.query(sql, function (err, result) {
     if (err) throw err
     if (result.length == 0)
       res.render('search')
     else{
     for (var j = 0; j < 10 && j < result.length; j++) {
-      console.log(result[j].login)
       result[j].status = _ago(result[j].status, result[j].time)
       result[j].birth_date = dateDiff(result[j].birth_date)
     }

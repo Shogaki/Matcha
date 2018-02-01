@@ -77,10 +77,10 @@ Quel age ?
 <% for(var i=0; i<10 && i<nbresult; i++) {%>
   <div class="ui centered card">
   <div class="image">
-    <img src="/wankuls/zpim678X.png">
+    <img src="<%= values[i].img1%>">
   </div>
   <div class="content">
-    <a class="header"><%= values[i].login %> (<%= values[i].birth_date %> ans)</a>
+    <a href="/profil/<%= values[i].login%>" class="header"><%= values[i].login %> (<%= values[i].birth_date %> ans)</a>
     <div class="meta">
       <span class="date"> <%= values[i].ville %> (<%= values[i].dist %> km)</span>
     </div>
@@ -89,12 +89,13 @@ Quel age ?
     </div>
   </div>
   <div class="extra content">
-    <a>
+    <a href="/profil/<%= values[i].login%>">
       <i class="empty star icon"></i>
       <%= values[i].popularity %> Points<br> <%= values[i].status %>
     </a>
   </div>
 </div>
+</a>
 <% } %>
 </ul>
 </div>
