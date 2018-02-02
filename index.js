@@ -45,7 +45,6 @@ function getRandominInterval(min, max) {
   return Math.random() * (max - min) + min;
 }
 function _ago(status, ago) {
-  console.log(ago)
     var now = Math.floor(Date.now() / 1000);
     ago = Date.parse(ago)/1000
     var diff = now - ago
@@ -86,20 +85,6 @@ function dateDiff(birthday){
   birthday = new Date(birthday);
   return new Number((new Date().getTime() - birthday.getTime()) / 31536000000).toFixed(0);
 
-}
-function show_status(id){
-  var timeStamp = Math.floor(Date.now() / 1000);
-  var sql       = "SELECT status, time FROM user WHERE id = " + id
-  con.query(sql, function (err, result) {
-    time = result[0].time;
-    status = result[0].status;
-
-    if (status == 0 || time >= timeStamp + 600)
-      console.log("🛑 Déconnecté " + _ago(time))
-    else {
-      console.log("✅ Connecté")
-    }
-  });
 }
 function escapeHtml(text) {
   return text
@@ -175,8 +160,7 @@ function addFakeAccounts(nb){
     }
   }
 }
-function visit(src, dest)
-{
+function visit(src, dest){
   sql = "INSERT INTO `visite`(`id_visiteur`, `id_visite`) VALUES (" + src + " ," + dest + ")"
   con.query(sql, function(err, result){
   })
@@ -212,8 +196,6 @@ function send_mail(from, to, subject, text){
         subject: subject,
         text: text
     }, (err, info) => {
-        console.log(info.envelope);
-        console.log(info.messageId);
     });
 };
 // SOCKETS
@@ -223,7 +205,6 @@ io.sockets.on('connection', function (socket, id) {
     socket.id = id;
 });
   socket.on('vote', function (dest, value) {
-    console.log(socket.id)
     vote(socket.id, dest, value)
   });
 });
@@ -274,8 +255,7 @@ app.get('/install', function (req, res){
     });
     res.redirect('/');
 })
-app.get('/yesiamsureiwanttoresetthedatabase', function (req, res)
-{
+app.get('/yesiamsureiwanttoresetthedatabase', function (req, res){
   con.query('TRUNCATE TABLE `blacklist`');
   con.query('TRUNCATE TABLE `message`');
   con.query('TRUNCATE TABLE `report`');
@@ -306,23 +286,24 @@ app.get('/profil/:username', function(req, res) {
         res.render('error', {error: 31})
       else if (result.length == 1)
       {
-        visit(sess.user_id, result[0].id)
+        con.query("SELECT tags.name FROM tags INNER JOIN user_tag ON user_tag.id_tag = tags.id WHERE user_tag.id_user = " + result[0].id, function(err, tags)
+        {
+          visit(sess.user_id, result[0].id)
           result[0].birth_date = dateDiff(result[0].birth_date)
           result[0].time = _ago(result[0].status, result[0].time)
           var sql = "SELECT count(*) as nb FROM `vote` as `vote1`  LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = " + result[0].id + " AND vote2.id_src = " + req.session.user_id
           con.query(sql, function (err, result2) {
             if (result2[0].nb == 0)
-              res.render('user', {value: result[0], id: sess.user_id, matched:0})
+              res.render('user', {value: result[0], tags: tags, id: sess.user_id, matched:0})
             else
-              res.render('user', {value: result[0], id: sess.user_id, matched:1})
+              res.render('user', {value: result[0], tags: tags, id: sess.user_id, matched:1})
           })
-        }
-        else if (result.length == 0){
-          res.render('error', {error: 31})
+        })
       }
-      else {
+      else if (result.length == 0)
+        res.render('error', {error: 31})
+      else
         res.render('error', {error: 30})
-      }
     })
   }
   else
@@ -536,5 +517,4 @@ app.get('/logout',function(req,res){
 app.use(function(req, res, next){
   res.render('404')})
 server.listen(port)
-console.log("✅  | Serveur HTTP OK")
-console.log("✅  | Port " + port)
+console.log("✅  | Listening on port " + port)

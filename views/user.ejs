@@ -41,7 +41,10 @@
         <div class="column">
             <p><div class="ui right compact yellow segment">
               <h4 class="ui header">Tags :</h4>
-              <p>#pute #salope #alkapote</p>
+              <p><% for(var i=0; i<tags.length; i++){ %>
+                <%= "#" + tags[i].name  %>
+              <% } %>
+            </p>
             </div></p>
             <div class="column">
                 <p><div class="ui right compact yellow segment">
