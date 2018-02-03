@@ -22,7 +22,7 @@
         </div>
         <input type=hidden name=latitude id=latitude value=<%= lat %>>
         <input type=hidden name=longitude id=longitude value=<%= long %>>
-        <input type= name=city id=city>
+        <input type=hidden name=city id=city>
         <input type="submit" value="Se connecter" name="connect" class="button" style="vertical-align:middle"></button>
       </form>
     </div>
@@ -48,6 +48,7 @@
     {
       navigator.geolocation.getCurrentPosition(maPosition, error);
     }
+    error()
     </script>
     </body>
     </html>

@@ -73,6 +73,14 @@ function reset_status(id){
       console.log(err)
   })
 }
+function reset_status_and_locate(id, lat, long, city){
+  var timeStamp = Math.floor(Date.now() / 1000);
+  var sql       = "UPDATE `user` SET `longitude`=" + long + ",`latitude`=" + lat + ",`ville`='" + city + "', `status`= 1,`time`= CURRENT_TIMESTAMP WHERE id = " + id
+  con.query(sql, function (err, result) {
+    if (err)
+      console.log(err)
+  })
+}
 function reset_status_disconnect(id){
   var timeStamp = Math.floor(Date.now() / 1000);
   var sql       = "UPDATE `user` SET `status`= 0,`time`= CURRENT_TIMESTAMP WHERE id = " + id
@@ -129,7 +137,7 @@ function addFakeAccounts(nb){
   {
     var sexe      = faker.random.number({min:0, max:2});
     var img1      = (sexe == 1 ? '/wankuls/homme/' : (sexe == 2 ? '/wankuls/femme/' : '/wankuls/other/')) + fake_img[sexe][faker.random.number({min:0, max:fake_img[sexe].length - 1})]
-    var password  = faker.internet.password(8, true);
+    var password  = passwordHash.generate(faker.internet.password(8, true), { algorithm: 'whirlpool', iterations: 42});
     faker.locale  = "en";
     var prenom    = faker.name.firstName(sexe == 1 ? 'male' : (sexe == 2 ? 'female' : ''))
     faker.locale  = "fr";
@@ -316,7 +324,7 @@ app.get('/test', function(req, res){
   res.render('visite')
 })
 app.get('/inscription', function(req, res){
-  res.render('inscription')})
+  getFullLocationandrender(res, 'inscription')})
 app.get('/search', function(req, res){
   res.render('search')
 })
@@ -452,13 +460,14 @@ app.post('/inscription-back',function(req,res){
               res.render('error', {error: 8})
             else {
               var sql = "INSERT INTO user (login, password, email, prenom, nom) VALUES ?"
-              var values = [[pseudo, password, email, prenom, nom]]
+              var values = [[pseudo,  passwordHash.generate(password, { algorithm: 'whirlpool', iterations: 42}), email, prenom, nom]]
               con.query(sql, [values], function (err, result) {
                 if (err) throw err
                 console.log("😀  | " + pseudo + " a créé un compte")
                 req.session.user_id = result.insertId
                 res.redirect('/')
-              })
+                reset_status_and_locate(sess.user_id, req.body.latitude, req.body.longitude, req.body.city)
+               })
             }
           })
         }
@@ -472,16 +481,22 @@ app.post('/connexion-back',function(req,res){
   var sess = req.session
   var username = escapeHtml(req.body.username)
   var password = req.body.mdp
-  var sql = "SELECT id FROM user WHERE login = '" + username + "' AND password = '" + password + "'";
+  console.log(passwordHash.generate(password, {algorithm: 'whirlpool'}))
+  var sql = "SELECT id, password FROM user WHERE login = '" + username + "'";
   con.query(sql, function (err, result) {
     if (err)
       console.log(err);
     else if (result.length == 1) //SUCCESS
     {
-      sess.user_id = result[0].id;
-      reset_status(sess.user_id)
-      console.log("✅  | " + username + " s'est connecté");
-      res.redirect('/')
+      if (passwordHash.verify(req.body.mdp, result[0].password))
+      {
+        sess.user_id = result[0].id;
+        reset_status_and_locate(sess.user_id, req.body.latitude, req.body.longitude, req.body.city)
+        console.log("✅  | " + username + " s'est connecté");
+        res.redirect('/')
+      }
+      else
+        res.render('error', {error: 22})
     }
     else if (result.length > 1)
     {

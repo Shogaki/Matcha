@@ -16,6 +16,7 @@
 
 20 - Identifiants incorrects
 21 - Plusieurs comptes avec les mêmes identifiants
+22 - Mot de passe incorrect
 
 30 - Erreurs Profil
 
