@@ -12,6 +12,7 @@ var mysql             = require('mysql')
 var iplocate          = require('node-iplocate')
 var faker             = require('faker');
 var passwordHash      = require('password-hash');
+const fileUpload      = require('express-fileupload');
 const nodemailer      = require('nodemailer');
 var EventEmitter      = require('events').EventEmitter;
 var ev                = new EventEmitter();
@@ -35,7 +36,11 @@ app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static(__dirname + '/public'))
 app.use(cookieParser())
-app.use(session({ secret: "Jean-michel crapaud, c'est lui, il est dans la river", resave: false, saveUninitialized: true}))
+app.use(session({
+   secret: "Jean-michel crapaud, c'est lui, il est dans la river",
+   resave: false,
+   saveUninitialized: true
+ }))
 
 //USEFULL FUNCTIONS
 function deg2rad(x){
@@ -161,7 +166,7 @@ function addFakeAccounts(nb){
     if(prenom != "angelo")
     {
       con.query(sql + values, function (err, result){
-        if (!(typeof result == "undefined" || result == null))
+        if (!(typeof result == undefined || result == null))
           addRandomTags(result.insertId);
       })
       n++;
@@ -206,6 +211,165 @@ function send_mail(from, to, subject, text){
     }, (err, info) => {
     });
 };
+function edit_pseudo(id, new_pseudo){
+  if (new_pseudo.length < 24 && new_pseudo.length > 3)
+  {
+    var sql = "UPDATE `user` SET `login`= " + new_pseudo + " WHERE id = " + id
+    con.query(sql, function(err, res){})
+  }
+}
+function edit_password(id, new_password){
+  var Regexpassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{6,}$/g
+
+  if (password.length >= 6 && password.length <= 36 && Regexpassword.test(new_password)){
+    var sql = "UPDATE `user` SET `password`= " + passwordHash.generate(new_password, { algorithm: 'whirlpool', iterations: 42}) + " WHERE id = " + id
+    con.query(sql, function(err, res){})
+  }
+}
+function edit_prenom(id, new_prenom){
+  if (new_prenom.length < 36 && new_prenom.length > 3)
+  {
+    var sql = "UPDATE `user` SET `password`= " + new_password + " WHERE id = " + id
+    con.query(sql, function(err, res){})
+  }
+}
+function edit_nom(id, new_nom){
+  if (new_prenom.length < 36 && new_prenom.length > 3)
+  {
+    var sql = "UPDATE `user` SET `nom`= " + new_nom + " WHERE id = " + id
+    con.query(sql, function(err, res){})
+  }
+}
+function edit_birthdate(id, new_birthdate){
+  if ((new_date = Date.parse(new_birthdate)) !== NaN)
+  {
+    var sql = "UPDATE user SET birth_date = " + new_date + " WHERE id = " + id
+    con.query(sql, function (err, res){})
+  }
+}
+function edit_img1(id, file){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+    path = id + "_1" + Math.floor(new Date() / 1000)+ ".jpg"
+    file.mv(path)
+    var sql = "UPDATE `user` SET `img1`= " + path + " WHERE id = " + id
+  }
+}
+function edit_img2(id, file){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+    path = id + "_2" + Math.floor(new Date() / 1000)+ ".jpg"
+    file.mv(path)
+    var sql = "UPDATE `user` SET `img2`= " + path + " WHERE id = " + id
+  }
+}
+function edit_img3(id, file){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+    path = id + "_3" + Math.floor(new Date() / 1000)+ ".jpg"
+    file.mv(path)
+    var sql = "UPDATE `user` SET `img3`= " + path + " WHERE id = " + id
+  }
+}
+function edit_img4(id, file){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+    path = id + "_4" + Math.floor(new Date() / 1000)+ ".jpg"
+    file.mv(path)
+    var sql = "UPDATE `user` SET `img4`= " + path + " WHERE id = " + id
+  }
+}
+function edit_img5(id, file){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+    path = id + "_5" + Math.floor(new Date() / 1000)+ ".jpg"
+    file.mv(path)
+    var sql = "UPDATE `user` SET `img5`= " + path + " WHERE id = " + id
+  }
+}
+function edit_sexual_orientation(id, or_h, or_f, or_a){
+  var sql = "UPDATE user SET or_h = " + or_h + " or_f = " + or_f + " or_a " + or_a + " WHERE id = " + id
+  con.query(sql, function(err, res){})
+}
+function edit_ville(id, ville){
+  var sql = "UPDATE user SET ville = '" + ville + "' WHERE id = " + id
+  con.query(sql, function(err, res){})
+}
+function edit_sexe(id, sexe){
+  var sql = "UPDATE user SET sexe = " + sexe + " WHERE id = " + id
+  con.query(sql, function (err, res){})
+}
+function edit_bio(id, bio){
+  if (bio.length <= 140)
+  {
+    var sql = "UPDATE user SET bio = '" + bio + "' WHERE id = " + id
+    con.query(sql, function (err, res){})
+  }
+}
+function edit_email(id, email){
+  var Regexemail    = /^[0-9a-z._-]+@{1}[0-9a-z.-]{2,}[.]{1}[a-z]{2,5}$/g
+  if (Regexemail.test(email))
+  {
+    var sql = "UPDATE user SET email = '" + email + "' WHERE id = " + id
+    con.query(sql, function (err, res){})
+  }
+}
+
+app.get('/edit-profile-back', function(req, res){
+  var sess          = req.session
+  var post          = req.body
+  var files         = req.files
+  var id            = sess.user_id
+
+  con.query('SELECT password, mail FROM user WHERE id =' + sess.user_id, function(err, res){
+    if (res[0] && passwordHash.verify(post.old_password, res[0].password))
+    {
+      var old_mail = res[0].email
+      if (post.pseudo != "")
+        edit_pseudo(id, htmlspecialchars(post.pseudo));
+      if (post.prenom != "")
+        edit_prenom(id, htmlspecialchars(post.prenom));
+      if (post.nom != "")
+        edit_nom(id, post.nom)
+      if (post.password != "")
+        edit_password(id, htmlspecialchars(post.password))
+      if (post.birth != "")
+        edit_birthdate(id, htmlspecialchars(post.birth))
+      if (files)
+      {
+        if (files.img1)
+          edit_img(id, files.img1)
+        if (files.img2)
+          edit_img(id, files.img2)
+        if (files.img3)
+          edit_img(id, files.img3)
+        if (files.img4)
+          edit_img(id, files.img4)
+        if (files.img5)
+          edit_img(id, files.img5)
+      }
+      edit_sexual_orientation(id, (typeof post.or_h !== undefined && post.or_h !== null ? 1 : 0), (typeof post.or_f !== undefined && post.or_f !== null ? 1 : 0), (typeof post.or_a !== undefined && post.or_a !== null ? 1 : 0))
+      if (post.sexe == "0" || post.sexe == "1" || post.sexe == "2")
+        edit_sexe(id, htmlspecialchars(post.sexe))
+      if (post.ville != "")
+        edit_ville(id, htmlspecialchars(post.ville))
+      if (post.bio.length <= 1024)
+        edit_bio(id, htmlspecialchars(post.bio))
+      if (post.email != "")
+        edit.email(id, htmlspecialchars(post.email))
+      setTimeout(function(){
+        var sql = "SELECT nom, prenom, login, email, birth_date FROM user WHERE id = " + id;
+        con.query(sql, function(err, res){
+          var text = "Bonjour " + res[0].prenom + "!\n Tu as récemment completé ou modifié ton profil !\n Voici un résumé de ton identité sur matcha ! Vérifie que tout est correct :)\n"
+          text += "Tu t'appelles " + res[0].prenom + " " + res[0].nom + " mais tu préfere que l'on t'appelle " + res[0].login + "!\n"
+          text += (res[0].sexe == 1 ? "Tu es un homme de " : (res[0].sexe == 2 ? "Tu es une femme de " : "Tu as ") + dateDiff(res[0].birth_date) + " ans et tu es attiré par "
+          text += (res[0].or_h == 1 ? "les hommes " : "") + (res[0].or_f == 1 ? "les femmes " : "") + (res[0].or_a == 1 ? "les non binaires\n" : "\n")
+          text += "Tu viens de " + res[0].ville + " et tu te décris ainsi :" + res[0].bio
+          send_mail('"Thomas, de Matcha 🍌" <thomas@matcha.fr>', "\""res[0].prenom + " " + res[0].nom + "\" <" + res[0].mail + ">", "Modification de tes infos", text)
+      })}, 5000);
+    }
+    else
+      res.render('error', {error: 8})
+
+
+  }
+})
+
 // SOCKETS
 io.sockets.on('connection', function (socket, id) {
   socket.on('init', function(id) {
@@ -277,10 +441,102 @@ app.get('/yesiamsureiwanttoresetthedatabase', function (req, res){
 app.get('/addfakeaccount/:nb', function(req, res) {
   addFakeAccounts(req.params.nb)
 })
-app.get('/', function(req, res) {
-  sess = req.session
+app.get('/p', function(req, res) {
+  var sess          = req.session
+  var post          = req.body
   if (sess.user_id)
+  {
+    con.query('SELECT * FROM user WHERE id = ' + sess.user_id , function(err, res){
+  //    con.query('SELECT names FROM tags INNER JOIN user_tag ON tags.id = user_tag.id_tag ')
+        var or_a          = (typeof post.or_a === undefined || post.or_a === null ? res[0].or_a : 1)
+        var or_h          = (typeof post.or_h === undefined || post.or_h === null ? res[0].or_h : 1)
+        var or_f          = (typeof post.or_f === undefined || post.or_f === null ? res[0].or_f : 1)
+  var today         = new Date();
+        console.log(res[0])
+        console.log(dateDiff(res[0].birth_date) + 5)
+        var ageMin        = (typeof(post.ageMin) !== undefined ? parseInt(post.ageMin) : dateDiff(res[0].birth_date) - 5)
+        var ageMax        = (typeof(post.ageMax) !== undefined ? parseInt(post.ageMax) : dateDiff(res[0].birth_date) + 5)
+        var popMin        = (typeof(post.popMin) !== undefined ? parseInt(post.popMin) : res[0].popularity * 0.9);
+        var popMax        = (typeof(post.popMax) !== undefined ? parseInt(post.popMax) : res[0].popularity * 1.1);
+        var distMax       = (typeof(post.distMax) !== undefined ? parseInt(post.distMax) : 1500);
+        var n             = 0;
+        var sort          = (typeof(post.sort) !== undefined ? post.sort : "default" );
+        console.log(post.tags)
+        var tags          = (post.tags !== undefined ? post.tags.replace(/[ ]*/g, '').substr(1).split('#') : "1" )
+        var sql           = "SELECT DISTINCT user.id, user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('" + res[0].latitude + "', '" + res[0].longitude + "', latitude, longitude) / 1000) dist, img1 FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " WHERE "
+          sql += "("
+          if (or_h == 1)  {
+            sql += (n != 0 ? " AND " : "") + " user.sexe = 1 "
+            n++;
+          }
+          if (or_f == 1)  {
+            sql += (or_h != 0 ? " OR " : (n != 0 ? " AND " : "")) + " user.sexe = 2 "
+            n++;
+          }
+          if (or_a == 1)  {
+            sql += (or_h + or_f != 0 ? " OR " : (n != 0 ? " AND " : "")) + " user.sexe = 0 "
+            n++;
+          }
+          sql += ")"
+
+        if (ageMin != "" && ageMax != "")
+        {
+          var birthdateMin  = new Date();
+          var birthdateMax  = new Date();
+          console.log(birthdateMin, birthdateMax)
+          console.log(ageMin, ageMax)
+          birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
+          birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
+          console.log(birthdateMin, + " " + birthdateMax)
+          sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
+        }
+        else if (ageMin == "" && ageMax != "")
+        {
+          var birthdateMin  = new Date();
+          birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
+          sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date >= '" + birthdateMin.toISOString().substring(0, 10) + "')"
+        }
+        else if (ageMin != "" && ageMax == "")
+        {
+          var birthdateMax  = new Date();
+          birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
+          sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date <= '" + birthdateMax.toISOString().substring(0, 10) + "')"
+        }
+        if (!isNaN(popMin))  {
+          sql += (or_h + or_f + or_a != 0 || ageMin != "" || ageMax != "" ?  " AND " : "") + " user.popularity > " + popMin
+          n++;
+        }
+        if (post.tags != "")
+        {
+          tags.forEach(function(element) {
+            sql += (or_h + or_f + or_a != 0 || ageMin != "" || ageMax != "" || !isNaN(popMin) ? " AND " : "") + "tags.name = '" + element + "'"
+            n++;
+          });
+        }
+        if ((or_h + or_f + or_a == 0 && ageMin == "" && ageMax == "" && isNaN(popMin) && post.tags == ""))
+          sql += "1"
+        if (distMax != "" && !isNaN(distMax))
+          sql += " HAVING DIST < " + distMax
+        if (sort == "pop")
+          sql+= " ORDER BY popularity DESC, dist ASC, birth_date DESC"
+        else if (sort == "age")
+          sql+=" ORDER BY birth_date DESC, popularity DESC, dist ASC"
+        else if (sort == "dist")
+          sql+=" ORDER BY FLOOR(dist / 100) ASC, ABS( " + user_pop + " - popularity) DESC, birth_date DESC"
+        con.query(sql, function (err, result) {
+          if (err) throw err
+          if (result.length == 0)
+            res.render('search')
+          else{
+          for (var j = 0; j < 10 && j < result.length; j++) {
+            result[j].status = _ago(result[j].status, result[j].time)
+            result[j].birth_date = dateDiff(result[j].birth_date)
+          }
+          res.render('result-search', {values: result, initialdata: req.body, nbresult:result.length})
+        }})
+      })
     res.render('home')
+  }
   else
     res.redirect('/connexion')
 })
@@ -331,13 +587,14 @@ app.get('/search', function(req, res){
 app.get('/edit-profile', function(req, res){
   res.render('edit-profile')
 })
+
 app.get('/favicon.ico', function(req, res) {})
 app.post('/search-back', function(req, res){
   var sess          = req.session
   var post          = req.body
-  var or_a          = (typeof post.or_a !== "undefined" && post.or_a !== null ? 1 : 0);
-  var or_h          = (typeof post.or_h !== "undefined" && post.or_h !== null ? 1 : 0);
-  var or_f          = (typeof post.or_f !== "undefined" && post.or_f !== null ? 1 : 0);
+  var or_a          = (typeof post.or_a !== undefined && post.or_a !== null ? 1 : 0);
+  var or_h          = (typeof post.or_h !== undefined && post.or_h !== null ? 1 : 0);
+  var or_f          = (typeof post.or_f !== undefined && post.or_f !== null ? 1 : 0);
   var today         = new Date();
   var ageMin        = post.ageMin;
   var ageMax        = post.ageMax;
@@ -368,8 +625,10 @@ app.post('/search-back', function(req, res){
   {
     var birthdateMin  = new Date();
     var birthdateMax  = new Date();
+    console.log(birthdateMin, birthdateMax)
     birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
     birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
+    console.log(birthdateMin, birthdateMax)
     sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
   }
   else if (ageMin == "" && ageMax != "")
@@ -398,13 +657,14 @@ app.post('/search-back', function(req, res){
   if ((or_h + or_f + or_a == 0 && ageMin == "" && ageMax == "" && isNaN(popMin) && post.tags == ""))
     sql += "1"
   if (distMax != "" && !isNaN(distMax))
-    sql += " HAVING DIST > " + distMax
-  if (sort == "pop")
-    sql+= " ORDER BY popularity DESC, dist ASC, birth_date DESC"
-  else if (sort == "age")
-    sql+=" ORDER BY birth_date DESC, popularity DESC, dist ASC"
-  else if (sort == "dist")
-    sql+=" ORDER BY dist ASC, popularity DESC, birth_date DESC"
+    sql += " HAVING DIST < " + distMax
+    if (sort == "pop")
+      sql+= " ORDER BY FLOOR(popularity / 100) DESC, dist ASC, birth_date DESC"
+    else if (sort == "age")
+      sql+=" ORDER BY FLOOR(birth_date / 5) DESC, popularity DESC, dist ASC"
+    else if (sort == "dist")
+      sql+=" ORDER BY FLOOR(dist / 50) ASC, popularity DESC, birth_date DESC"
+    cons
   con.query(sql, function (err, result) {
     if (err) throw err
     if (result.length == 0)
@@ -481,7 +741,6 @@ app.post('/connexion-back',function(req,res){
   var sess = req.session
   var username = escapeHtml(req.body.username)
   var password = req.body.mdp
-  console.log(passwordHash.generate(password, {algorithm: 'whirlpool'}))
   var sql = "SELECT id, password FROM user WHERE login = '" + username + "'";
   con.query(sql, function (err, result) {
     if (err)
@@ -528,7 +787,6 @@ app.get('/logout',function(req,res){
 })
 
 //A LAISSER EN DERNIER
-
 app.use(function(req, res, next){
   res.render('404')})
 server.listen(port)

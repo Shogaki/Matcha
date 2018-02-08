@@ -2,65 +2,27 @@
 <% include parts/header.ejs %>
 <title>Lol</title>
 <div id='body'>
-  <div class="ui yellow segment">
-    <h4 class="ui header">Des suggestions pour toi mon pote</h4>
-  </div>
-  </div>
-  <div class="ui stackable four column grid">
-  <div class="ui yellow segment">
-  <div class="ui stackable four column grid">
-    <div class="column" style="min-width:260px">
-      <div class="ui fluid card">
-        <div class="image">
-          <img src="/wankuls/zpim678X.png">
-        </div>
-        <div class="content" >
-          <a class="header">Daniel Louise</a>
-            <p>Age : </p>
-          <button class="ui inverted blue button">Profil</button>
-          <button class="ui inverted pink button">Match moi bb</button>
-        </div>
+  <% for(var i=0; i<10 && i<nbresult; i++) {%>
+    <div class="ui centered card">
+    <div class="image" style="height:290px">
+      <img src="<%= values[i].img1%>">
+    </div>
+    <div class="content">
+      <a href="/profil/<%= values[i].login%>" class="header"><%= values[i].login %> (<%= values[i].birth_date %> ans)</a>
+      <div class="meta">
+        <span class="date"> <%= values[i].ville %> (<%= values[i].dist %> km)</span>
+      </div>
+      <div class="description">
+        <%= values[i].bio %>
       </div>
     </div>
-    <div class="column" style="min-width:260px">
-      <div class="ui fluid card">
-        <div class="image">
-          <img src="/wankuls/zpim678X.png">
-        </div>
-        <div class="content">
-          <a class="header">Helen Troy</a>
-            <p>Age : </p>
-          <button class="ui inverted blue button">Profil</button>
-          <button class="ui inverted pink button">Match moi bb</button>
-        </div>
-      </div>
-    </div>
-    <div class="column" style="min-width:260px">
-      <div class="ui fluid card">
-        <div class="image">
-          <img src="/wankuls/zpim678X.png">
-        </div>
-        <div class="content">
-          <a class="header">Helen Troy</a>
-            <p>Age : </p>
-          <button class="ui inverted blue button">Profil</button>
-          <button class="ui inverted pink button">Match moi bb</button>
-        </div>
-      </div>
-    </div>
-    <div class="column" style="min-width:260px">
-      <div class="ui fluid card">
-        <div class="image">
-          <img src="/wankuls/zpim678X.png">
-        </div>
-        <div class="content">
-          <a class="header">Elliot Fu</a>
-            <p>Age : </p>
-          <button class="ui inverted blue button">Profil</button>
-           <button class="ui inverted pink button">Match moi bb</button>
-        </div>
-      </div>
+    <div class="extra content">
+      <a href="/profil/<%= values[i].login%>">
+        <i class="empty star icon"></i>
+        <%= values[i].popularity %> Points<br> <%= values[i].status %>
+      </a>
     </div>
   </div>
-</div>
+  </a>
+  <% } %>
 </div>
