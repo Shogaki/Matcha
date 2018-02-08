@@ -1,0 +1,84 @@
+<link href="/css/style.css" rel="stylesheet" type="text/css">
+<% include parts/header.ejs %>
+<!-- List user => buttons -->
+<% users.forEach(function(user){ %>
+<a href="http://local:8081/chat?match=<%= user.id %>" class="ui image label">
+  <img src="<%= user.img1 %>">
+  <%= user.login %>
+</a>
+<% }) %>
+
+<% if (match) { %>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <div class="item">
+    <div class="right floated content">
+    </div>
+    <img class="ui avatar image" src="<%= match.img1 %>">
+    <div class="content">
+    <%= match.login %>
+    </div>
+  </div>
+  <div id="message-list">
+<% messages.forEach (function(message){ %>
+  <% if (userId === message.id_src){ %>
+    <div class="ui yellow message"> <%= message.text %> </div>
+  <% } else { %>
+    <div class="ui blue message"> <%= message.text %> </div>
+  <% } %>
+<% }) %>
+  </div>
+  <form>
+    <div class="ui large icon input">
+      <input id="message" type="text" name="message" placeholder="Message" required>
+      <i class="comments icon"></i>
+    </div>
+  </form>
+<% } %>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+
+<script>
+
+/*global io, rivets, utils*/
+/*jslint browser: true*/
+var socket = io.connect("http://local:5000");
+var i, j;
+
+socket.on("<%= userId %>-<%= dstId %>", function (message) {
+  if (<%= userId %> === message.userId){
+    $("#message-list").append('<div class="ui blue message">' + message.message + '</div>');
+  } else {
+    $("#message-list").append('<div class="ui yellow message">' + message.message + '</div>');
+  }
+});
+
+console.log(<%= userId %>);
+
+$("form").submit(function(e){
+  var text = $('#message').val();
+  socket.emit('message', {
+    channel: "<%= userId %>-<%= dstId %>",
+    message: text
+  });
+  $('#message').val("");
+
+  //
+  console.log(text);
+  e.preventDefault();
+});
+
+/**
+ * Liste des messages
+
+var messages = [];
+
+/**
+ * Liste des utilisateurs
+
+var users = [];
+
+
+/*** DataBinding initial ***/
+</script>

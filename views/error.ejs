@@ -1,13 +1,55 @@
+<link href="/css/style.css" rel="stylesheet" type="text/css">
+<% include parts/header.ejs %>
+<div class="ui red message">Une erreur c est produite</div>
 <%= error %>
 <%if (error == 1) {%>  Pseudo trop court  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Pseudo trop court !
+</div>
 <%if (error == 2) {%>  Pseudo trop long  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Pseud trop long
+</div>
 <%if (error == 3) {%>  Pseudo déja utilisé  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Pseudo déja utilisé
+</div>
 <%if (error == 4) {%>  Mot de passe trop court  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Mot de passe trop court
+</div>
 <%if (error == 5) {%>  Mot de passe trop long  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Mot de passe trop long
+</div>
 <%if (error == 6) {%>  Mot de passe trop simple  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Mot de passe trop simple
+</div>
 <%if (error == 7) {%>  Email mal formaté  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Email mal formaté
+</div>
 <%if (error == 8) {%>  Email déja utilisé  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Email déja utilisé
+</div>
 <%if (error == 9) {%>  Prenom trop long  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Prenom trop long
+</div>
 <%if (error == 10) {%>  Nom trop long  <%}%>
+<div class="ui yellow center aligned segment" id="connexion-div">
+  <i class="warning sign icon"></i>
+  Nom trop long
+</div>
 <%if (error == 11) {%>  Toutes les données n'ont pas été renseignées  <%}%>
-<div class="ui red message">Une erreur c est produite</div>

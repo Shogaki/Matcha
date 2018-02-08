@@ -1,7 +1,12 @@
 //INITIAL CONFIGURATION
 
 var express           = require('express')
-const fs              = require('fs');
+var app = express();
+var http = require('http').Server(app);
+module.exports.io = require('socket.io')(http);
+http.listen(5000);
+
+require('./socket');
 var http              = require('http')
 var parseurl          = require('parseurl')
 var cookieParser      = require('cookie-parser')
@@ -627,7 +632,49 @@ app.get('/search', function(req, res){
 app.get('/edit-profile', function(req, res){
   res.render('edit-profile')
 })
+
+app.get('/chat', function(req, res) {
+  console.log(req.session.user_id);
+  if (!req.session.user_id) {
+    return res.redirect('/connexion');
+  }
+  // get users
+  var sql = "SELECT user.id, user.login, user.nom, user.prenom, user.img1 FROM vote as vote1 LEFT OUTER JOIN vote as vote2 ON vote2.`id_src` = vote1.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src INNER JOIN user ON user.id = vote1.id_dst WHERE vote1.id_src=" + req.session.user_id
+  con.query(sql, function (err, users) {
+    console.log("[USER]", users);
+    var match = users.filter(function (user) {
+      return user.id == req.query.match;
+    })[0];
+    if (match === undefined && req.query.match !== undefined) {
+      return res.redirect('/chat');
+    }
+
+    var sql2 ="SELECT * FROM `message` WHERE `id_src` IN (" + req.session.user_id + "," + req.query.match + ") AND `id_dst` IN (" + req.session.user_id + "," + req.query.match + ")"
+    con.query(sql2, function(err, messages) {
+      console.log(messages);
+      res.render('chat', { userId: req.session.user_id, dstId: req.query.match || -1, users: users, match: match, messages: messages });
+    })
+
+  })
+
+})
+
+app.get('/test', function(req, res){
+  req.session.user_id
+  var sql = "SELECT visiteur FROM visites";
+  con.query(sql, function(err, res) {
+    res.render('visite', { visitors: res })
+  })
+})
+
+app.get('/inscription', function(req, res){res.render('inscription')})
+
+app.get('/search', function(req, res){res.render('search')})
+
+app.get('/edit-profile', function(req, res){res.render('edit-profile')})
+
 app.get('/favicon.ico', function(req, res) {})
+
 app.post('/search-back', function(req, res){
   var sess          = req.session
   var post          = req.body
@@ -723,7 +770,7 @@ app.post('/inscription-back',function(req,res){
   var Regexemail    = /^[0-9a-z._-]+@{1}[0-9a-z.-]{2,}[.]{1}[a-z]{2,5}$/g
   if (post.pseudo && post.passwd && post.email && post.prenom && post.nom)
   {
-    var pseudo      = htmlspecialchars(post.pseudo)
+    var pseudo      = htmlspecialchars(post.pseudo)      
     var password    = htmlspecialchars(post.passwd)
     var email       = htmlspecialchars(post.email)
     var prenom      = htmlspecialchars(post.prenom)
@@ -824,6 +871,7 @@ app.get('/logout',function(req,res){
     })
   })
 })
+//TCHAT
 
 //A LAISSER EN DERNIER
 app.use(function(req, res, next){
