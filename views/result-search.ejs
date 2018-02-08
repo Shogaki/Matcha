@@ -2,157 +2,102 @@
 <% include parts/header.ejs %>
 <div class="ui yellow center aligned segment" id="connexion-div">
   <div class="header">Recherche ton duo</div>
+  <form action="/search-back" method="post" id=search-form >
   <div class="center aligned">
   <div class="ui fields form">
     <br><br><label>Quel(s) genre(s) recherches tu ? :) </label><br>
-    <div class="inline fields middle" style="width:175px; margin:auto">
+    <div class="inline fields middle" style="width:200px; margin:auto">
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency" checked="checked">
+        <input type="checkbox" name="or_h" value=1>
         <label><i class="man icon"></i></label>
         </div>
       </div>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency">
+        <input type="checkbox" name="or_f" value=1>
         <label><i class="woman icon"></i></label>
         </div>
       </div>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency">
+        <input type="checkbox" name="or_a" value=1>
         <label><i class="other gender icon"></i></label>
     </div>
   </div>
+</div><br>
+Ajouter des Tags
+<br>
+<div class="ui right labeled left icon input">
+
+  <i class="tags icon"></i>
+  <input type="text" placeholder="#lainkapete #tuconnaiswankil" name="tags" value="<%= initialdata.tags %>">
+  <a class="ui tag label">
+    #
+  </a>
 </div>
-les # que tu recherches
-<div class="ui search">
-  <input class="prompt center" type="text" placeholder="#jsussl1k #lainkapeté">
-  <div class="results"></div>
-</div>
-Oussa
+<br><br>
+Oussa<br>
 <div class="ui search inline wide field">
-  <input class="prompt center" type="text" placeholder="Nombre de Km max">
+  <input class="prompt center" type="text" name="distMax" placeholder="Nombre de Km max" value="<%= initialdata.distMax %>">
   <div class="results"></div>
 </div>
-Quel popularité sur le site ?
+Quel popularité sur le site ?<br>
 <div class="ui search inline wide field">
-  <input class="prompt center" type="text" placeholder="point pop min">
+  <input class="prompt center" type="text" name="popMin" placeholder="point pop min" value="<%= initialdata.popMin %>">
   <div class="results"></div>
 </div>
-Quel ages ?
+Quel age ?
 <div class="fields center" style="width:300px;margin:auto">
 <div class="field">
-  <input class="prompt center" type="text" placeholder="15 a nn c tro jeun">
+  <input class="prompt center" type="text" name="ageMin" placeholder="15 a nn c tro jeun" value="<%= initialdata.ageMin %>">
   <div class="results"></div>
 </div>
 <div class="field">
-  <input class="prompt center" type="text" placeholder="99 j m lé vieu">
+  <input class="prompt center" type="text" name="ageMax" placeholder="99 j m lé vieu" value="<%= initialdata.ageMax %>">
   <div class="results"></div>
+</div></div>
+<div class="field compact" style="width:150px;margin:auto">
+  Tri par
+<select class="ui compact dropdown" form=search-form name=sort>
+  <option value="pop">Popularité</option>
+  <option value="dist">Distance</option>
+  <option value="age">age</option>
+</select>
+</div>
+</div><br>
+<input type="submit" class="ui primary button" value="🔍    Rechercher">
+</form>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <div class="ui form">
-    <div class="inline fields">
-      <label>Que veux tu garder/activer</label>
-      <div class="field">
-        <div class="ui radio checkbox">
-          <input type="checkbox" name="fruit">
-          <label>Sexe</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui radio checkbox">
-          <input type="checkbox" name="fruit">
-          <label>les #</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui radio checkbox">
-          <input type="checkbox" name="fruit">
-          <label>localisation</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui radio checkbox">
-          <input type="checkbox" name="fruit">
-          <label>popularité</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui radio checkbox">
-          <input type="checkbox" name="fruit">
-          <label>l'age</label>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 <div class="ui yellow segment" id="connexion-div">
   <div class="ui stackable two column grid">
+    <br>
+<% for(var i=0; i<10 && i<nbresult; i++) {%>
   <div class="ui centered card">
-  <div class="image">
-    <img src="/wankuls/zpim678X.png">
+  <div class="image" style="height:290px">
+    <img src="<%= values[i].img1%>">
   </div>
   <div class="content">
-    <a class="header">Nom (age)</a>
+    <a href="/profil/<%= values[i].login%>" class="header"><%= values[i].login %> (<%= values[i].birth_date %> ans)</a>
     <div class="meta">
-      <span class="date">statue</span>
+      <span class="date"> <%= values[i].ville %> (<%= values[i].dist %> km)</span>
     </div>
     <div class="description">
-      LA BIOGRAPHIE
+      <%= values[i].bio %>
     </div>
   </div>
   <div class="extra content">
-    <a>
+    <a href="/profil/<%= values[i].login%>">
       <i class="empty star icon"></i>
-      popularité
+      <%= values[i].popularity %> Points<br> <%= values[i].status %>
     </a>
   </div>
 </div>
-<div class="ui centered card">
-  <div class="image">
-    <img src="/wankuls/zpim678X.png">
-  </div>
-  <div class="content">
-    <a class="header">Nom (age)</a>
-    <div class="meta">
-      <span class="date">statue</span>
-    </div>
-    <div class="description">
-      LA BIOGRAPHIE
-    </div>
-  </div>
-  <div class="extra content">
-    <a>
-      <i class="empty star icon"></i>
-      popularité
-    </a>
-  </div>
-</div>
-<div class="ui centered card">
-  <div class="image">
-    <img src="/wankuls/zpim678X.png">
-  </div>
-  <div class="content">
-    <a class="header">Nom (age)</a>
-    <div class="meta">
-      <span class="date">statue</span>
-    </div>
-    <div class="description">
-        LA BIOGRAPHIE
-    </div>
-  </div>
-  <div class="extra content">
-    <a>
-      <i class="empty star icon"></i>
-      popularité
-    </a>
-  </div>
-</div>
+</a>
+<% } %>
+</ul>
 </div>
 </div>
 </div>
