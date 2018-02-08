@@ -26,3 +26,8 @@
 40 - Erreurs Recherche
 
 40 - Pas de sexe renseigné
+
+50 - Erreurs modif profil
+
+50 - Le mot de passe renseigné ne correspond pas
+51 - Votre Profil n'est pas suffisament complet pour acceder a cette page

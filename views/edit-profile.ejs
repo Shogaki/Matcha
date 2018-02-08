@@ -2,59 +2,77 @@
 <% include parts/header.ejs %>
 <title>Lol</title>
 <div id='body'>
-<div class="ui yellow center aligned segment">
+<div class="ui yellow middle center aligned segment" style="max-width:1200px; margin:auto">
   <h4 class="ui header">Modification Profil </h4>
+  <form action="edit-profile-back" method="POST" id=edit encType="multipart/form-data">
   <div class="ui form">
-  <div class="three fields">
+  <div class="four fields">
     <div class="field">
       <label>Pseudo</label>
-      <input type="text" placeholder="ex : Darklaink, damiLeBoss..">
+      <input type="text" name=pseudo placeholder="ex : Darklaink, damiLeBoss..">
     </div>
     <div class="field">
       <label>Prenom</label>
-      <input type="text" placeholder="ex : Thomas, Henry, Damien..">
+      <input type="text" name=prenom placeholder="ex : Thomas, Henry, Damien..">
     </div>
     <div class="field">
       <label>Nom</label>
-      <input type="text" placeholder="ex : Dupont, Miette ..">
+      <input type="text" name=nom placeholder="ex : Dupont, Miette ..">
+    </div>
+    <div class="field">
+      <label>Localisation</label>
+      <input type="text" name=ville placeholder="ex : Paris, Nantes, j'ai cramé">
     </div>
   </div>
-  <div class="field">
-    <label>Password</label>
-    <input name="password" type="password">
+  <div class="two fields">
+    <div class="field">
+      <label>Ancien Password</label>
+      <input name="old_password" type="password" required>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input name="password" type="password">
+    </div>
   </div>
-  <div class="ui form">
+  <div class="three fields">
   <div class="field">
-    <select>
+    <label>Genre :</label>
+    <select form="edit" name=sexe class="ui dropdown">
       <option value="">Genre</option>
-      <option value="2">Homme</option>
-      <option value="1">Femme</option>
+      <option value="1">Homme</option>
+      <option value="2">Femme</option>
       <option value="0">Autre Genre</option>
     </select>
   </div>
-  <div class="ui form success">
+  <div class="field">
+    <label>Ta date de naissance</label>
+    <input name="birth" type="date" required>
+  </div>
   <div class="field">
     <label>E-mail</label>
-    <input type="email" placeholder="ex : Jeveu1wankul@gmail.fdp">
+    <input type="email" name=email placeholder="ex : Jeveu1wankul@gmail.fdp">
   </div>
+</div>
+  <div class="ui form success">
+
   <div class="ui center form">
-    <div class="inline fields">
-    <label>Quels genres recherches tu ? :) </label>
+    <div class="inline fields" style="margin:auto">
+    <label>Tu recherche : </label>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency" checked="checked">
+        <input type="checkbox" name="or_h" checked="checked">
         <label><i class="man icon"></i></label>
         </div>
       </div>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency">
+        <input type="checkbox" name="or_f">
         <label><i class="woman icon"></i></label>
         </div>
       </div>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="frequency">
+        <input type="checkbox" name="or_a">
         <label><i class="other gender icon"></i></label>
       </div>
     </div>
@@ -67,44 +85,44 @@
   <div>
     <div class="field">
     <label>Ta bio</label>
-    <textarea></textarea>
+    <textarea form="edit" name=bio placeholder="J'etais dans le metro et puis j'ai cramé"></textarea>
   </div>
-    <input type=date>
     <div class="five fields">
       <div class="field">
-    <label for="file" class="ui icon button">
+    <label for="img1" class="ui icon button">
         <i class="file icon"></i>
         Open File</label>
-    <input type="file" id="file" style="display:none">
+    <input type="file" id="img1" style="display:none" name=img1>
 </div>
 <div class="field">
-<label for="file" class="ui icon button">
+<label for="img2" class="ui icon button">
   <i class="file icon"></i>
   Open File</label>
-<input type="file" id="file" style="display:none">
+<input type="file" id="img2" style="display:none" name=img2>
 </div>
 
 <div class="field">
-<label for="file" class="ui icon button">
+<label for="img3" class="ui icon button">
   <i class="file icon"></i>
   Open File</label>
-<input type="file" id="file" style="display:none">
+<input type="file" id="img3" style="display:none" name=img3>
 </div>
 <div class="field">
-<label for="file" class="ui icon button">
+<label for="img4" class="ui icon button">
   <i class="file icon"></i>
   Open File</label>
-<input type="file" id="file" style="display:none">
+<input type="file" id="img4" style="display:none" name=img4>
 </div>
 <div class="field">
-<label for="file" class="ui icon button">
+<label for="img5" class="ui icon button">
   <i class="file icon"></i>
   Open File</label>
-<input type="file" id="file" style="display:none">
+<input type="file" id="img5" style="display:none" name=img5>
 </div>
 </div>
 <br>
-  <div class="ui submit button">Submit</div>
+  <input type="submit" class="ui submit button">Submit</div>
+</form>
 </div>
 </div>
 </div>

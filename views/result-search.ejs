@@ -77,7 +77,7 @@ Quel age ?
 <% for(var i=0; i<10 && i<nbresult; i++) {%>
   <div class="ui centered card">
   <div class="image" style="height:290px">
-    <img src="<%= values[i].img1%>">
+    <img src="<%= values[i].img1%>" style="max-height:290px">
   </div>
   <div class="content">
     <a href="/profil/<%= values[i].login%>" class="header"><%= values[i].login %> (<%= values[i].birth_date %> ans)</a>

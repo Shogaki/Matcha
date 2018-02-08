@@ -2,7 +2,7 @@
 <% include parts/header.ejs %>
 <title>Lol</title>
 <div id='body'>
-  <% for(var i=0; i<10 && i<nbresult; i++) {%>
+  <% for(var i=0; i<10 && i < values.length; i++) {%>
     <div class="ui centered card">
     <div class="image" style="height:290px">
       <img src="<%= values[i].img1%>">
