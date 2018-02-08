@@ -279,7 +279,13 @@ app.get('/chat', function(req, res) {
 
 })
 
-app.get('/test', function(req, res){res.render('visite')})
+app.get('/test', function(req, res){
+  req.session.user_id
+  var sql = "SELECT visiteur FROM visites";
+  con.query(sql, function(err, res) {
+    res.render('visite', { visitors: res })
+  })
+})
 
 app.get('/inscription', function(req, res){res.render('inscription')})
 
@@ -364,7 +370,6 @@ app.post('/inscription-back',function(req,res){
   {
     var pseudo      = htmlspecialchars(post.pseudo)      
     var password    = htmlspecialchars(post.passwd)
-    var passhash = CryptoJS.MD5(password);
     var email       = htmlspecialchars(post.email)
     var prenom      = htmlspecialchars(post.prenom)
     var nom         = htmlspecialchars(post.nom)
@@ -462,4 +467,3 @@ app.get('/logout',function(req,res){
 app.listen(port)
 app.use(function(req, res, next){ res.render('404')})
 console.log("✅  | Serveur HTTP OK")
-console.log("✅  | Port " + port)
