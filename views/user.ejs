@@ -1,15 +1,18 @@
 <title><%= value.login %> - Matcha</title>
 <% include parts/header.ejs %>
+<div style="width:80%;min-width:500px;max-width:1500px;margin:auto">
     <div class="ui celled grid">
         <div class="row">
           <div class="three wide column">
             <img class="ui large circular image" src=<%= (value.img1 ? value.img1 : "/wankuls/zpim678X.png") %>>
-            <div class="ui middle aligned segment">
+            <div class="ui center aligned segment">
               <img class="ui mini middle aligned image" src= <%= (value.img2 ? value.img2 :  "/wankuls/zpim678X.png") %>>
               <img class="ui mini middle aligned image" src= <%= (value.img3 ? value.img3 :  "/wankuls/zpim678X.png") %>>
               <img class="ui mini middle aligned image" src= <%= (value.img4 ? value.img4 :  "/wankuls/zpim678X.png") %>>
               <img class="ui mini middle aligned image" src= <%= (value.img5 ? value.img5 :  "/wankuls/zpim678X.png") %>>
-              Point <i class="star icon"></i>
+            </div>
+            <div class="ui yellow 1center aligned segment">
+              <%= value.popularity %> <i class="star icon"></i>
             </div>
           </div>
           <div class="thirteen wide column">
@@ -70,11 +73,8 @@
       <button class="ui black button">Report !</button>
     </div>
     </div>
-    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-      var socket = io.connect('http://localhost:8081');
-      socket.emit('init', <%= id %>)
+      socket.emit('init', <%= id %>, <%=value.id %>)
       $('#like').click(function () {
         socket.emit('vote', <%= value.id %>, 1);
       })
@@ -83,3 +83,4 @@
       })
       </script>
   </div>
+</div>

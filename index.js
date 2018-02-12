@@ -1,11 +1,10 @@
 //INITIAL CONFIGURATION
 
 var express           = require('express')
-var app = express();
-var http = require('http').Server(app);
-module.exports.io = require('socket.io')(http);
+var app               = express();
+var http              = require('http').Server(app);
+module.exports.io     = require('socket.io')(http);
 http.listen(5000);
-
 require('./socket');
 var http              = require('http')
 var parseurl          = require('parseurl')
@@ -184,25 +183,6 @@ function visit(src, dest){
   con.query(sql, function(err, result){
   })
 }
-function vote(src, dest, value){
-  var sql = ('SELECT id, value FROM vote WHERE id_src = ' + src + ' AND id_dst = ' + dest)
-  con.query(sql, function (err, result) {
-    if (err)
-      console.log(err);
-    if (result[0] || result.length != 0){
-      if (result[0].value != value){
-        var value_old = result[0].value
-        con.query('DELETE FROM `vote` WHERE id_src = ' + src + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value, function (err, result) {
-          con.query('UPDATE `user` SET `popularity`=`popularity` - ' + value_old + ' WHERE `id` = ' + dest);
-        })
-      }
-    }
-    if (result.length == 0 || result[0].value != value)
-    con.query("INSERT INTO `vote`(`id_src`, `id_dst`, `value`) VALUES (" + src + ", " + dest + "," + value + ")", function(err, result){
-      con.query('UPDATE `user` SET `popularity`=`popularity` + ' + value + ' WHERE `id` = ' + dest);
-    })
-  })
-}
 function send_mail(from, to, subject, text){
     let transporter = nodemailer.createTransport({
         sendmail: true,
@@ -340,77 +320,89 @@ function edit_email(id, email){
   }
 }
 
-app.post('/edit-profile-back', function(req, res){
-  var sess          = req.session
-  var post          = req.body
-  var files         = req.files
-  var id            = sess.user_id
-  console.log(req.files)
-
-  con.query('SELECT password, email FROM user WHERE id =' + id, function(err, result){
-    if (result[0] && passwordHash.verify(post.old_password, result[0].password))
-    {
-      var old_mail = result[0].email
-      if (post.pseudo != "")
-        edit_pseudo(id, htmlspecialchars(post.pseudo));
-      if (post.prenom != "")
-        edit_prenom(id, htmlspecialchars(post.prenom));
-      if (post.nom != "")
-        edit_nom(id, post.nom)
-      if (post.password != "")
-        edit_password(id, htmlspecialchars(post.password))
-      if (post.birth != "")
-        edit_birthdate(id, htmlspecialchars(post.birth))
-      if (files)
-      {
-        if (files.img1)
-          edit_img1(id, files.img1)
-        if (files.img2)
-          edit_img2(id, files.img2)
-        if (files.img3)
-          edit_img3(id, files.img3)
-        if (files.img4)
-          edit_img4(id, files.img4)
-        if (files.img5)
-          edit_img5(id, files.img5)
-      }
-      edit_sexual_orientation(id, (typeof post.or_h !== undefined && post.or_h === 'on' ? 1 : 0), (typeof post.or_f !== undefined && post.or_f === 'on' ? 1 : 0), (typeof post.or_a !== undefined && post.or_a === 'on' ? 1 : 0))
-      if (post.sexe == "0" || post.sexe == "1" || post.sexe == "2")
-        edit_sexe(id, htmlspecialchars(post.sexe))
-      if (post.ville != "")
-        edit_ville(id, htmlspecialchars(post.ville))
-      var bio = (post.bio === undefined ? "" : post.bio)
-      console.log(bio)
-      if (bio.length <= 1024)
-        edit_bio(id, htmlspecialchars(bio))
-      if (post.email != "")
-        edit_email(id, htmlspecialchars(post.email))
-      setTimeout(function(){
-        var sql = "SELECT * FROM user WHERE id = " + id;
-        con.query(sql, function(err, result){
-          var text = "Bonjour " + result[0].prenom + "!\n Tu as récemment completé ou modifié ton profil !\n Voici un résumé de ton identité sur matcha ! Vérifie que tout est correct :)\n"
-          text += "Tu t'appelles " + result[0].prenom + " " + result[0].nom + " mais tu préfere que l'on t'appelle " + result[0].login + "!\n"
-          text += (result[0].sexe == 1 ? "Tu es un homme de " : (result[0].sexe == 2 ? "Tu es une femme de " : "Tu as ")) + dateDiff(result[0].birth_date) + " ans et tu es attiré par "
-          text += (result[0].or_h == 1 ? "les hommes " : "") + (result[0].or_f == 1 ? "les femmes " : "") + (result[0].or_a == 1 ? "les non binaires\n" : "\n")
-          text += "Tu viens de " + result[0].ville + " et tu te décris ainsi :" + result[0].bio
-          console.log('"Thomas, de Matcha 🍌" <thomas@matcha.fr>' +  "\"" + result[0].prenom + " " + result[0].nom + "\" <" + result[0].email + ">" + "Modification de tes infos" + text)
-          send_mail('"Thomas, de Matcha 🍌" <thomas@matcha.fr>', "\"" + result[0].prenom + " " + result[0].nom + "\" <" + result[0].email + ">", "Modification de tes infos", text)
-      })}, 5000);
-    }
-    else
-      res.render('error', {error: 8})
-  })
-})
 
 // SOCKETS
 io.sockets.on('connection', function (socket, id) {
-  socket.on('init', function(id) {
+  socket.on('init', function(id, id_dest) {
     id = parseInt(id);
     socket.id = id;
+    new_notification(1, id, id_dest)
+    send_push_notification(1, id, id_dest)
   });
   socket.on('vote', function (dest, value) {
-    vote(socket.id, dest, value)
-  });
+    con.query('SELECT id, value FROM vote WHERE id_src = ' + socket.id + ' AND id_dst = ' + dest, function (err, result)
+    {
+      con.query('SELECT count(*) as nb FROM `vote` as `vote1` LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = ' + socket.id + ' AND vote2.id_src = ' + dest, function (err, result2)
+      {
+        var was_matched = (result2 && result2[0] && result2[0].nb == 1 ? 1 : 0)
+        if (result[0] || result.length != 0)
+        {
+          if (result[0].value != value)
+          {
+            var value_old = result[0].value
+            con.query('DELETE FROM `vote` WHERE id_src = ' + src + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value, function (err, result)
+            {
+              con.query('UPDATE `user` SET `popularity`=`popularity` - ' + value_old + ' WHERE `id` = ' + dest);
+            })
+          }
+        }
+        if (result.length == 0 || result[0].value != value)
+        {
+          con.query("INSERT INTO `vote`(`id_src`, `id_dst`, `value`) VALUES (" + src + ", " + dest + "," + value + ")", function(err, result)
+          {
+            con.query('UPDATE `user` SET `popularity`=`popularity` + ' + value + ' WHERE `id` = ' + dest, function(err, res)
+            {
+              new_notification(0, src, dest)
+              send_push_notification(0, src, dest)
+            })
+          });
+        }
+        con.query('SELECT count(*) as nb FROM `vote` as `vote1` LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = ' + socket.id + ' AND vote2.id_src = ' + dest, function (err, result3)
+        {
+          var is_matched = (result2 && result2[0] && result2[0].nb == 1 ? 1 : 0)
+          if (was_matched == 0 && is_matched == 1)
+          {
+            new_notification(3, socket.id, dest)
+            send_push_notification(3, socket.id, dest)
+          }
+          else if (was_matched == 1 && is_matched == 0)
+          {
+            new_notification(4, socket.id, dest)
+            send_push_notification(4, socket.id, dest)
+          }
+        })
+      })
+    })
+    if (result.length == 0 || result[0].value != value)
+      con.query("INSERT INTO `vote`(`id_src`, `id_dst`, `value`) VALUES (" + src + ", " + dest + "," + value + ")", function(err, result){
+        con.query('UPDATE `user` SET `popularity`=`popularity` + ' + value + ' WHERE `id` = ' + dest, function(err, res){
+          new_notification(0, src, dest)
+          send_push_notification(0, src, dest)
+        });
+      })
+    });
+
+
+
+
+    function new_notification(type, src, dest){
+      if (!isNaN(type) && !isNaN(src) && !isNaN(dest))
+      {
+        send_push_notification(type, src, dest)
+        var sql = "INSERT INTO `notification`(`src`, `dst`, `type`) VALUES ('" + src + "','" + dest + "','" + type + "')"
+        con.query(sql)
+      }
+
+    }
+  function send_push_notification(type, src, dest){
+    sql = "SELECT login FROM user WHERE id = " + src
+    con.query(sql, function(err, res){
+      if (res.length == 1){
+        console.log("Notif envoyée")
+        socket.broadcast.emit("notif" + dest, src, res[0].login, type);
+      }
+    })
+  }
 });
 // ROUTING
 app.get('/install', function (req, res){
@@ -479,7 +471,7 @@ app.get('/', function(req, res) {
   {
     con.query('SELECT * FROM user WHERE id = ' + sess.user_id , function(err, result){
       if (result[0].birth_date == null || result[0].img1 == null)
-        res.render('error', {error: 51})
+        res.redirect('edit-profile')
       else{
         con.query('SELECT name FROM tags INNER JOIN user_tag ON tags.id = user_tag.id_tag WHERE user_tag.id_user = ' + sess.user_id, function(err, tags_result){
           if (tags_result.length != 0){
@@ -578,7 +570,7 @@ app.get('/', function(req, res) {
             result[j].status = _ago(result[j].status, result[j].time)
             result[j].birth_date = dateDiff(result[j].birth_date)
           }
-          res.render('result-search', {values: result, initialdata: req.body, nbresult:result.length})
+          res.render('result-search', {id: sess.user_id, values: result, initialdata: req.body, nbresult:result.length})
         }})
       })
     }})
@@ -586,7 +578,6 @@ app.get('/', function(req, res) {
   else
     res.redirect('/connexion')
 })
-app.get('/offline', function(req, res) {res.render('offline-home')})
 app.get('/profil/:username', function(req, res) {
   if (req.session.user_id != undefined)
   {
@@ -622,17 +613,26 @@ app.get('/profil/:username', function(req, res) {
 app.get('/connexion', function(req, res){
   getFullLocationandrender(res, 'connexion')
 })
-app.get('/test', function(req, res){
-  res.render('visite')
+app.get('/visites', function(req, res){
+  if (req.session == undefined || req.session.user_id === undefined)
+    res.redirect('connexion');
+  else
+    res.render('visite', {id: req.session.user_id})
 })
 app.get('/inscription', function(req, res){
   getFullLocationandrender(res, 'inscription')})
 app.get('/search', function(req, res){
+  if (req.session == undefined || req.session.user_id === undefined)
+    res.redirect('connexion');
+  else
+    res.render('search', {id: req.session.user_id})
  })
 app.get('/edit-profile', function(req, res){
-  res.render('edit-profile')
+  if (req.session == undefined || req.session.user_id === undefined)
+    res.redirect('connexion');
+  else
+    res.render('edit-profile', {id: req.session.user_id})
 })
-
 app.get('/chat', function(req, res) {
   console.log(req.session.user_id);
   if (!req.session.user_id) {
@@ -658,29 +658,76 @@ app.get('/chat', function(req, res) {
   })
 
 })
+app.get('/inscription', function(req, res){res.render('inscription')})
+app.post('/edit-profile-back', function(req, res){
+  var sess          = req.session
+  var post          = req.body
+  var files         = req.files
+  var id            = sess.user_id
+  console.log(req.files)
 
-app.get('/test', function(req, res){
-  req.session.user_id
-  var sql = "SELECT visiteur FROM visites";
-  con.query(sql, function(err, res) {
-    res.render('visite', { visitors: res })
+  con.query('SELECT password, email FROM user WHERE id =' + id, function(err, result){
+    if (result[0] && passwordHash.verify(post.old_password, result[0].password))
+    {
+      var old_mail = result[0].email
+      if (post.pseudo != "")
+        edit_pseudo(id, htmlspecialchars(post.pseudo));
+      if (post.prenom != "")
+        edit_prenom(id, htmlspecialchars(post.prenom));
+      if (post.nom != "")
+        edit_nom(id, post.nom)
+      if (post.password != "")
+        edit_password(id, htmlspecialchars(post.password))
+      if (post.birth != "")
+        edit_birthdate(id, htmlspecialchars(post.birth))
+      if (files)
+      {
+        if (files.img1)
+          edit_img1(id, files.img1)
+        if (files.img2)
+          edit_img2(id, files.img2)
+        if (files.img3)
+          edit_img3(id, files.img3)
+        if (files.img4)
+          edit_img4(id, files.img4)
+        if (files.img5)
+          edit_img5(id, files.img5)
+      }
+      edit_sexual_orientation(id, (typeof post.or_h !== undefined && post.or_h === 'on' ? 1 : 0), (typeof post.or_f !== undefined && post.or_f === 'on' ? 1 : 0), (typeof post.or_a !== undefined && post.or_a === 'on' ? 1 : 0))
+      if (post.sexe == "0" || post.sexe == "1" || post.sexe == "2")
+        edit_sexe(id, htmlspecialchars(post.sexe))
+      if (post.ville != "")
+        edit_ville(id, htmlspecialchars(post.ville))
+      var bio = (post.bio === undefined ? "" : post.bio)
+      console.log(bio)
+      if (bio.length <= 1024)
+        edit_bio(id, htmlspecialchars(bio))
+      if (post.email != "")
+        edit_email(id, htmlspecialchars(post.email))
+      setTimeout(function(){
+        var sql = "SELECT * FROM user WHERE id = " + id;
+        con.query(sql, function(err, result){
+          var text = "Bonjour " + result[0].prenom + "!\n Tu as récemment completé ou modifié ton profil !\n Voici un résumé de ton identité sur matcha ! Vérifie que tout est correct :)\n"
+          text += "Tu t'appelles " + result[0].prenom + " " + result[0].nom + " mais tu préfere que l'on t'appelle " + result[0].login + "!\n"
+          text += (result[0].sexe == 1 ? "Tu es un homme de " : (result[0].sexe == 2 ? "Tu es une femme de " : "Tu as ")) + dateDiff(result[0].birth_date) + " ans et tu es attiré par "
+          text += (result[0].or_h == 1 ? "les hommes " : "") + (result[0].or_f == 1 ? "les femmes " : "") + (result[0].or_a == 1 ? "les non binaires\n" : "\n")
+          text += "Tu viens de " + result[0].ville + " et tu te décris ainsi :" + result[0].bio
+          console.log('"Thomas, de Matcha 🍌" <thomas@matcha.fr>' +  "\"" + result[0].prenom + " " + result[0].nom + "\" <" + result[0].email + ">" + "Modification de tes infos" + text)
+          send_mail('"Thomas, de Matcha 🍌" <thomas@matcha.fr>', "\"" + result[0].prenom + " " + result[0].nom + "\" <" + result[0].email + ">", "Modification de tes infos", text)
+      })}, 5000);
+    }
+    else
+      res.render('error', {error: 8})
   })
 })
-
-app.get('/inscription', function(req, res){res.render('inscription')})
-
-app.get('/search', function(req, res){res.render('search')})
-
-app.get('/edit-profile', function(req, res){res.render('edit-profile')})
-
 app.get('/favicon.ico', function(req, res) {})
-
 app.post('/search-back', function(req, res){
   var sess          = req.session
   var post          = req.body
-  var or_a          = (typeof post.or_a !== undefined && post.or_a !== null ? 1 : 0);
-  var or_h          = (typeof post.or_h !== undefined && post.or_h !== null ? 1 : 0);
-  var or_f          = (typeof post.or_f !== undefined && post.or_f !== null ? 1 : 0);
+  var or_a          = (post.or_a !== undefined ? 1 : 0);
+  var or_h          = (post.or_h !== undefined ? 1 : 0);
+  var or_f          = (post.or_f !== undefined ? 1 : 0);
+  console.log(post.or_a + " " + post.or_h + " " + post.or_f)
   var today         = new Date();
   var ageMin        = post.ageMin;
   var ageMax        = post.ageMax;
@@ -750,7 +797,7 @@ app.post('/search-back', function(req, res){
       sql+=" ORDER BY FLOOR(birth_date / 5) DESC, popularity DESC, dist ASC"
     else if (sort == "dist")
       sql+=" ORDER BY FLOOR(dist / 50) ASC, popularity DESC, birth_date DESC"
-    cons
+    console.log(sql)
   con.query(sql, function (err, result) {
     if (err) throw err
     if (result.length == 0)
@@ -760,7 +807,7 @@ app.post('/search-back', function(req, res){
       result[j].status = _ago(result[j].status, result[j].time)
       result[j].birth_date = dateDiff(result[j].birth_date)
     }
-    res.render('result-search', {values: result, initialdata: req.body, nbresult:result.length})
+    res.render('result-search', {values: result, initialdata: req.body, nbresult:result.length, id:sess.user_id})
   }})
 })
 app.post('/inscription-back',function(req,res){

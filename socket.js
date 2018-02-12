@@ -24,6 +24,26 @@ var io = require('./index').io;
 // })
 
 io.on('connection', function (socket) {
+
+  function new_notification(type, src, dest){
+    if (!isNaN(type) && !isNaN(src) && !isNaN(dest))
+    {
+      send_push_notification(type, src, dest)
+      var sql = "INSERT INTO `notification`(`src`, `dst`, `type`) VALUES ('" + src + "','" + dest + "','" + type + "')"
+      con.query(sql)
+    }
+
+  }
+  function send_push_notification(type, src, dest){
+    sql = "SELECT login FROM user WHERE id = " + src
+    con.query(sql, function(err, res){
+      if (res.length == 1){
+        console.log("Notif envoyée")
+        socket.broadcast.emit("notif" + dest, src, res[0].login, type);
+      }
+    })
+  }
+
   console.log('connected');
   socket.on('message', function (message) {
     io.emit(message.channel, message)
@@ -31,6 +51,8 @@ io.on('connection', function (socket) {
     var ids = message.channel.split('-');
     var values = [[ids[0], ids[1], message.message]];
     con.query(sql,[values], function (err, resul) {
+      new_notification(1, values[0], values[1])
+      send_push_notification(1, values[0], values[1])
       if (err) throw err;
     })
   })
