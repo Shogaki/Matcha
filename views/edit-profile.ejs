@@ -9,19 +9,19 @@
   <div class="four fields">
     <div class="field">
       <label>Pseudo</label>
-      <input type="text" name=pseudo placeholder="ex : Darklaink, damiLeBoss..">
+      <input type="text" name=pseudo placeholder="ex : Darklaink, damiLeBoss.." value=<%=values[0].login%> required>
     </div>
     <div class="field">
       <label>Prenom</label>
-      <input type="text" name=prenom placeholder="ex : Thomas, Henry, Damien..">
+      <input type="text" name=prenom placeholder="ex : Thomas, Henry, Damien.." value=<%=values[0].prenom%> required>
     </div>
     <div class="field">
       <label>Nom</label>
-      <input type="text" name=nom placeholder="ex : Dupont, Miette ..">
+      <input type="text" name=nom placeholder="ex : Dupont, Miette .." value=<%=values[0].nom%> required>
     </div>
     <div class="field">
       <label>Localisation</label>
-      <input type="text" name=ville placeholder="ex : Paris, Nantes, j'ai cramé">
+      <input type="text" name=ville placeholder="ex : Paris, Nantes, j'ai cramé" value=<%=values[0].ville%> required>
     </div>
   </div>
   <div class="two fields">
@@ -37,20 +37,19 @@
   <div class="three fields">
   <div class="field">
     <label>Genre :</label>
-    <select form="edit" name=sexe class="ui dropdown">
-      <option value="">Genre</option>
-      <option value="1">Homme</option>
-      <option value="2">Femme</option>
-      <option value="0">Autre Genre</option>
+    <select form="edit" name=sexe class="ui dropdown" required>
+      <option value="1" <%=values[0].sexe == 1 ? "selected" : " " %>>Homme</option>
+      <option value="2" <%=values[0].sexe == 2 ? "selected" : " " %>>Femme</option>
+      <option value="0" <%=values[0].sexe == 0 ? "selected" : " " %>>Autre Genre</option>
     </select>
   </div>
   <div class="field">
     <label>Ta date de naissance</label>
-    <input name="birth" type="date" required>
+    <input name="birth" type="date" required value=<%= values[0].birth_date %>>
   </div>
   <div class="field">
     <label>E-mail</label>
-    <input type="email" name=email placeholder="ex : Jeveu1wankul@gmail.fdp">
+    <input type="email" name=email placeholder="ex : Jeveu1wankul@gmail.fdp" value=<%= values[0].email%> required>
   </div>
 </div>
   <div class="ui form success">
@@ -60,19 +59,19 @@
     <label>Tu recherche : </label>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="or_h" checked="checked">
+        <input type="checkbox" name="or_h" <%= values[0].or_h == 1 ? "checked" : ""%>>
         <label><i class="man icon"></i></label>
         </div>
       </div>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="or_f">
+        <input type="checkbox" name="or_f" <%= values[0].or_f == 1 ? "checked" : ""%>>
         <label><i class="woman icon"></i></label>
         </div>
       </div>
       <div class="field">
         <div class="ui radio checkbox">
-        <input type="checkbox" name="or_a">
+        <input type="checkbox" name="or_a" <%= values[0].or_a == 1 ? "checked" : ""%>>
         <label><i class="other gender icon"></i></label>
       </div>
     </div>
@@ -80,12 +79,12 @@
 </div>
 <div class="field">
   <label>Tes Hashtag</label>
-  <input type="text" placeholder="ex : #jssuLink, #LeBoss..">
+  <input type="text" name="tags" placeholder="ex : #jssuLink, #LeBoss..">
 </div>
   <div>
     <div class="field">
     <label>Ta bio</label>
-    <textarea form="edit" name=bio placeholder="J'etais dans le metro et puis j'ai cramé"></textarea>
+    <textarea form="edit" name=bio placeholder="J'etais dans le metro et puis j'ai cramé"><%=values[0].bio%></textarea>
   </div>
     <div class="five fields">
       <div class="field">

@@ -4,12 +4,12 @@
     <div class="ui celled grid">
         <div class="row">
           <div class="three wide column">
-            <img class="ui large circular image" src=<%= (value.img1 ? value.img1 : "/wankuls/zpim678X.png") %>>
+            <img class="ui large circular image" src="<%= (value.img1 ? value.img1 : "/wankuls/zpim678X.png") %>">
             <div class="ui center aligned segment">
-              <img class="ui mini middle aligned image" src= <%= (value.img2 ? value.img2 :  "/wankuls/zpim678X.png") %>>
-              <img class="ui mini middle aligned image" src= <%= (value.img3 ? value.img3 :  "/wankuls/zpim678X.png") %>>
-              <img class="ui mini middle aligned image" src= <%= (value.img4 ? value.img4 :  "/wankuls/zpim678X.png") %>>
-              <img class="ui mini middle aligned image" src= <%= (value.img5 ? value.img5 :  "/wankuls/zpim678X.png") %>>
+              <img class="ui mini middle aligned image" src=" <%= (value.img2 ? value.img2 :  "/wankuls/zpim678X.png") %>">
+              <img class="ui mini middle aligned image" src=" <%= (value.img3 ? value.img3 :  "/wankuls/zpim678X.png") %>">
+              <img class="ui mini middle aligned image" src=" <%= (value.img4 ? value.img4 :  "/wankuls/zpim678X.png") %>">
+              <img class="ui mini middle aligned image" src=" <%= (value.img5 ? value.img5 :  "/wankuls/zpim678X.png") %>">
             </div>
             <div class="ui yellow 1center aligned segment">
               <%= value.popularity %> <i class="star icon"></i>
@@ -61,13 +61,10 @@
         </div>
         </div>
       </div>
+      <% if (value.id != id) {%>
       <div class="three wide column">
         <div class="ui center aligned segment">
-        <% if (matched == 0){%>
-          <button id=like class='ui red button'>Like</button><button id=dislike class='ui grey button'>Next</button>
-          <% } else {%>
-            <button class="negative ui button">It's a Match !</button>
-            <% } %>
+          <button id=like class='ui red button'><%= (liked_by_user ? "Déja liké" : "Like")%></button><button class='ui disabled blue button'><%= (matched ? "Match :D" : (liked_user ?  "Vous like !": "Ne vous like pas"))%></button><button id=dislike class='ui grey button'>Ignorer</button>
         </div>
       </div>
       <button class="ui black button">Report !</button>
@@ -76,11 +73,16 @@
     <script>
       socket.emit('init', <%= id %>, <%=value.id %>)
       $('#like').click(function () {
+        document.getElementById('like').innerHTML = "Déja liké"
+        document.getElementById('dislike').innerHTML = "Ignorer"
         socket.emit('vote', <%= value.id %>, 1);
       })
       $('#dislike').click(function () {
+        document.getElementById('dislike').innerHTML = "Ignoré"
+        document.getElementById('like').innerHTML = "Like"
         socket.emit('vote', <%= value.id %>,-1);
       })
       </script>
   </div>
+  <% } %>
 </div>

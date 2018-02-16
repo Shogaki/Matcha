@@ -35,6 +35,7 @@
     "password-hash": "^1.2.2",
     "qs": "^6.5.1",
     "range-parser": "^1.2.0",
+    "sha256": "^0.2.0",
     "socket.io": "^2.0.4",
     "socket.io-client": "^2.0.4",
     "statuses": "^1.4.0",

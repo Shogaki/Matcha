@@ -9,30 +9,6 @@
 		<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
-			var socket = io.connect("http://localhost:5000");
-			function ShowNotif(titre, TheText)
-			{
-				var options = {
-					body: TheText,
-				}
-				Notification.requestPermission();
-				var n = new Notification(titre, options);
-				n.onshow = function(){
-					setTimeout(n.close.bind(n), 5000);
-				}
-			}
-			socket.on('notif<%= id %>', function(src_id, src_name, type) {
-				if (type == 0)
-					ShowNotif("❤️", src_name + " viens de te liker ! :D")
-				else if (type == 1)
-					ShowNotif("Nouveau visiteur !", src_name + " a visité ton profil")
-				else if (type == 2)
-					ShowNotif("✉️ ", src_name + " a quelque chose a te dire")
-				else if (type == 3)
-					ShowNotif("It's a match !", src_name + "  viens de matcher avec toi !")
-				else if (type == 4)
-					ShowNotif("💔", src_name + " ne te like plus :(")
-			})
 		</script>
 		<link href="/css/style.css" rel="stylesheet" type="text/css">
 <meta name="viewport" content="initial-scale=1, maximum-scale=1">

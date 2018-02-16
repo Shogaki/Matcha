@@ -1,8 +1,8 @@
 <link href="/css/style.css" rel="stylesheet" type="text/css">
-<% include parts/header.ejs %>
+<% include parts/header-chat.ejs %>
 <!-- List user => buttons -->
 <% users.forEach(function(user){ %>
-<a href="http://local:8081/chat?match=<%= user.id %>" class="ui image label">
+<a href="http://localhost:8081/chat?match=<%= user.id %>" class="ui image label">
   <img src="<%= user.img1 %>">
   <%= user.login %>
 </a>
@@ -21,9 +21,9 @@
   <div id="message-list">
 <% messages.forEach (function(message){ %>
   <% if (userId === message.id_src){ %>
-    <div class="ui yellow message"> <%= message.text %> </div>
+    <div class="ui yellow message" style="text-align:right"> <%= message.text %> </div>
   <% } else { %>
-    <div class="ui blue message"> <%= message.text %> </div>
+    <div class="ui blue message" style="text-align:left"> <%= message.text %> </div>
   <% } %>
 <% }) %>
   </div>
@@ -43,18 +43,39 @@
 
 /*global io, rivets, utils*/
 /*jslint browser: true*/
-var socket = io.connect("http://local:5000");
+var socket = io.connect("http://localhost:5000");
 var i, j;
-
 socket.on("<%= userId %>-<%= dstId %>", function (message) {
-  if (<%= userId %> === message.userId){
-    $("#message-list").append('<div class="ui blue message">' + message.message + '</div>');
-  } else {
-    $("#message-list").append('<div class="ui yellow message">' + message.message + '</div>');
-  }
+  $("#message-list").append('<div class="ui yellow message" style="text-align:right">' + message.message + '</div>');
 });
 
-console.log(<%= userId %>);
+socket.on("<%= dstId %>-<%= userId %>", function (message) {
+  $("#message-list").append('<div class="ui blue message" style="text-align:left">' + message.message + '</div>');
+});
+
+function ShowNotif(titre, TheText)
+{
+  var options = {
+    body: TheText,
+  }
+  Notification.requestPermission();
+  var n = new Notification(titre, options);
+  n.onshow = function(){
+    setTimeout(n.close.bind(n), 5000);
+  }
+}
+socket.on('notif<%= userId %>', function(src_id, src_name, type) {
+  if (type == 0)
+    ShowNotif("❤️", src_name + " viens de te liker ! :D")
+  else if (type == 1)
+    ShowNotif("Nouveau visiteur !", src_name + " a visité ton profil")
+  else if (type == 2)
+    ShowNotif("✉️ ", src_name + " a quelque chose a te dire")
+  else if (type == 3)
+    ShowNotif("It's a match !", src_name + "  viens de matcher avec toi !")
+  else if (type == 4)
+    ShowNotif("💔", src_name + " ne te like plus :(")
+})
 
 $("form").submit(function(e){
   var text = $('#message').val();

@@ -36,6 +36,7 @@ io.on('connection', function (socket) {
   }
   function send_push_notification(type, src, dest){
     sql = "SELECT login FROM user WHERE id = " + src
+    console.log(sql)
     con.query(sql, function(err, res){
       if (res.length == 1){
         console.log("Notif envoyée")
@@ -51,8 +52,8 @@ io.on('connection', function (socket) {
     var ids = message.channel.split('-');
     var values = [[ids[0], ids[1], message.message]];
     con.query(sql,[values], function (err, resul) {
-      new_notification(1, values[0], values[1])
-      send_push_notification(1, values[0], values[1])
+      new_notification(2, ids[0], ids[1])
+      send_push_notification(2, ids[0], ids[1])
       if (err) throw err;
     })
   })

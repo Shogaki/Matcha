@@ -2,37 +2,15 @@
 <% include parts/header.ejs %>
 <div class="ui yellow segment">
 <div class="ui middle aligned divided list">
+<% for(var i=0; i<50 && i<values.length; i++) {%>
   <div class="item">
     <div class="right floated content">
     </div>
-    <img class="ui avatar image" src="/wankuls/zpim678X.png">
+    <img class="ui avatar image" src="<%= values[i].img1 %>">
     <div class="content">
-      Lena
+      <%= values[i].login %> (<%= values[i].time %>)
     </div>
   </div>
-  <div class="item">
-    <div class="right floated content">
-    </div>
-    <img class="ui avatar image" src="/wankuls/zpim678X.png">
-    <div class="content">
-      Lindsay
-    </div>
-  </div>
-  <div class="item">
-    <div class="right floated content">
-    </div>
-    <img class="ui avatar image" src="/wankuls/zpim678X.png">
-    <div class="content">
-      Mark
-    </div>
-  </div>
-  <div class="item">
-    <div class="right floated content">
-    </div>
-    <img class="ui avatar image" src="/wankuls/zpim678X.png">
-    <div class="content">
-      Molly
-    </div>
-  </div>
+  <% } %>
 </div>
 </div>

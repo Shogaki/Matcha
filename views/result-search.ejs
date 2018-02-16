@@ -99,5 +99,12 @@ Quel age ?
 <% } %>
 </ul>
 </div>
+<br><% if (last_page != -1){ %>
+  <%if (last_page >= 1){%>
+  <a href="/search-back/<%= (last_page) %>"><button class="ui button grey">Precedent</button></a>
+  <%}%>
+  <a href="/search-back/<%= (next_page) %>"><button class="ui button grey">Suivant</button></a>
+  <%}%>
 </div>
+
 </div>
