@@ -233,6 +233,24 @@ function send_mail(from, to, subject, text){
         console.log("✉️  | Mail envoyé")
     });
 };
+function send_mail_html(from, to, subject, text){
+    let transporter = nodemailer.createTransport({
+        sendmail: true,
+        newline: 'unix',
+        path: '/usr/sbin/sendmail'
+    });
+    transporter.sendMail({
+        from: from,
+        to: to,
+        subject: subject,
+        html: text
+    }, (err, info) => {
+      if (err)
+        console.log(err)
+      else
+        console.log("✉️  | Mail envoyé")
+    });
+};
 function edit_pseudo(id, new_pseudo){
   if (new_pseudo.length < 24 && new_pseudo.length > 3)
   {
@@ -358,7 +376,7 @@ function print_profile(login, res, req){
       res.render('error', {error: 31})
     else if (result.length == 1)
     {
-      con.query("SELECT tags.name FROM tags INNER JOIN user_tag ON user_tag.id_tag = tags.id WHERE user_tag.id_user = " + result[0].id, function(err, tags)
+      con.query("SELECT DISTINCT(tags.name) FROM tags INNER JOIN user_tag ON user_tag.id_tag = tags.id WHERE user_tag.id_user = " + result[0].id, function(err, tags)
       {
         visit(req.session.user_id, result[0].id)
         result[0].birth_date = dateDiff(result[0].birth_date)
@@ -382,83 +400,6 @@ function print_profile(login, res, req){
       res.render('error', {error: 30})
   })
 }
-
-
-// SOCKETS
-io.sockets.on('connection', function (socket, id) {
-  socket.on('init', function(id, id_dest) {
-    id = parseInt(id);
-    socket.id = id;
-    new_notification(1, id, id_dest)
-    send_push_notification(1, id, id_dest)
-  });
-  socket.on('vote', function (dest, value) {
-    console.log('SELECT id, value FROM vote WHERE id_src = ' + socket.id + ' AND id_dst = ' + dest)
-    con.query('SELECT id, value FROM vote WHERE id_src = ' + socket.id + ' AND id_dst = ' + dest, function (err, result)
-    {
-      con.query('SELECT count(*) as nb FROM `vote` as `vote1` LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = ' + socket.id + ' AND vote2.id_src = ' + dest, function (err, result2)
-      {
-        var was_matched = (result2 && result2[0] && result2[0].nb == 1 ? 1 : 0)
-        if (result[0] || result.length != 0)
-        {
-          if (result[0].value != value)
-          {
-            var value_old = result[0].value
-            con.query('DELETE FROM `vote` WHERE id_src = ' + socket.id + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value, function (err, result)
-            {
-              con.query('UPDATE `user` SET `popularity`=`popularity` - ' + value_old + ' WHERE `id` = ' + dest);
-            })
-          }
-        }
-        if (result.length == 0 || result[0].value != value)
-        {
-          con.query("INSERT INTO `vote`(`id_src`, `id_dst`, `value`) VALUES (" + socket.id + ", " + dest + "," + value + ")", function(err, result)
-          {
-            con.query('UPDATE `user` SET `popularity`=`popularity` + ' + value + ' WHERE `id` = ' + dest, function(err, res)
-            {
-              if (value == 1){
-                new_notification(0, socket.id, dest)
-                send_push_notification(0, socket.id, dest)
-              }
-            })
-          });
-        }
-        con.query('SELECT count(*) as nb FROM `vote` as `vote1` LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = ' + socket.id + ' AND vote2.id_src = ' + dest, function (err, result3)
-        {
-          var is_matched = (result2 && result2[0] && result2[0].nb == 1 ? 1 : 0)
-          if (was_matched == 0 && is_matched == 1)
-          {
-            new_notification(3, socket.id, dest)
-            send_push_notification(3, socket.id, dest)
-          }
-          else if (was_matched == 1 && is_matched == 0)
-          {
-            new_notification(4, socket.id, dest)
-            send_push_notification(4, socket.id, dest)
-          }
-        })
-      })
-    })
-  });
-    function new_notification(type, src, dest){
-      if (!isNaN(type) && !isNaN(src) && !isNaN(dest))
-      {
-        send_push_notification(type, src, dest)
-        var sql = "INSERT INTO `notification`(`src`, `dst`, `type`) VALUES ('" + src + "','" + dest + "','" + type + "')"
-        con.query(sql)
-      }
-
-    }
-  function send_push_notification(type, src, dest){
-    sql = "SELECT login FROM user WHERE id = " + src
-    con.query(sql, function(err, res){
-      if (res.length == 1){
-        console.log("Notif envoyée")
-        socket.broadcast.emit("notif" + dest, src, res[0].login, type);
-      }
-    })
-  }
-});
 
 // ROUTING
 app.get('/install', function (req, res){
@@ -514,6 +455,7 @@ app.get('/yesiamsureiwanttoresetthedatabase', function (req, res){
   con.query('TRUNCATE TABLE `user_tag`');
   con.query('TRUNCATE TABLE `visite`');
   con.query('TRUNCATE TABLE `vote`');
+  con.query('TRUNCATE TABLE `notification`');
   res.redirect('/install');
 })
 app.get('/addfakeaccount/:nb', function(req, res) {
@@ -603,8 +545,9 @@ app.get('/', function(req, res) {
                 n++;
                 f++;
               });
-              sql += ") GROUP BY user.id "
+              sql += ")"
             }
+            sql+= " GROUP BY user.id "
             if ((or_h + or_f + or_a == 0 && ageMin == "" && ageMax == "" && isNaN(popMin) && post.tags == ""))
               sql += "1"
             if (distMax != "" && !isNaN(distMax))
@@ -683,6 +626,7 @@ app.get('/likes', function(req, res){
           element.time = _ago2(element.time);
         })
         res.render('visite', {id: req.session.user_id, values: resultat})
+        con.query("UPDATE ")
       }
       else {
         res.redirect('/')
@@ -690,6 +634,28 @@ app.get('/likes', function(req, res){
     })
   }
 })
+
+app.get('/notifications', function(req, res){
+  if (req.session == undefined || req.session.user_id === undefined)
+    res.redirect('connexion');
+  else{
+    sql = "SELECT user.login, user.img1, notification.type, notification.new, notification.time FROM notification INNER JOIN user ON user.id = notification.src WHERE notification.dst = " + req.session.user_id + " ORDER by notification.time DESC"
+    con.query(sql, function(err, resultat){
+      if (resultat !== undefined)
+      {
+        resultat.forEach(function (element){
+          element.time = _ago2(element.time);
+        })
+        res.render('notification', {id: req.session.user_id, values: resultat})
+        con.query("UPDATE `notification` SET `new`= 0 WHERE dst = " + req.session.user_id, function(err, res){})
+      }
+      else {
+        res.redirect('/')
+      }
+    })
+  }
+})
+
 app.get('/my-likes', function(req, res){
   if (req.session == undefined || req.session.user_id === undefined)
     res.redirect('connexion');
@@ -868,7 +834,7 @@ app.post('/search-back', function(req, res){
     }
     sql += ")"
   }
-  if (ageMin != "" && ageMax != "")
+  if (ageMin != "" && ageMax != "" && !isNaN(ageMin) && !isNaN(ageMax))
   {
     var birthdateMin  = new Date();
     var birthdateMax  = new Date();
@@ -876,13 +842,13 @@ app.post('/search-back', function(req, res){
     birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
     sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
   }
-  else if (ageMin == "" && ageMax != "")
+  else if ((ageMin == "" || isNaN(ageMin)) && ageMax != "" && !isNaN(ageMax))
   {
     var birthdateMin  = new Date();
     birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
     sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date >= '" + birthdateMin.toISOString().substring(0, 10) + "')"
   }
-  else if (ageMin != "" && ageMax == "")
+  else if (ageMin != "" && !isNaN(ageMin) && (ageMax == "" || isNaN(ageMax)))
   {
     var birthdateMax  = new Date();
     birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
@@ -899,7 +865,7 @@ app.post('/search-back', function(req, res){
       n++;
     });
   }
-  if ((or_h + or_f + or_a == 0 && ageMin == "" && ageMax == "" && isNaN(popMin) && post.tags == ""))
+  if ((or_h + or_f + or_a == 0 && (ageMin == "" || isNaN(ageMin)) && (ageMax == "" || isNaN(ageMax)) && (popMin == "" || isNaN(popMin) && post.tags == "")))
     sql += "1"
   sql += " GROUP BY user.id HAVING nb_vote = 0 "
   if (distMax != "" && !isNaN(distMax))
@@ -1008,7 +974,7 @@ app.post('/inscription-back',function(req,res){
       res.render('error', {error: 11})
 })
 app.post('/connexion-back',function(req,res){
-  var sess = htmlspecialchars(req.session)
+  var sess = req.session
   var username = escapeHtml(req.body.username)
   var password = htmlspecialchars(req.body.mdp)
   var latitude = htmlspecialchars(req.body.latitude)
@@ -1022,7 +988,9 @@ app.post('/connexion-back',function(req,res){
     {
       if (passwordHash.verify(password, result[0].password))
       {
+        console.log(result[0].id)
         sess.user_id = result[0].id;
+        console.log(sess.user_id)
         reset_status_and_locate(sess.user_id, latitude, longitude, ville)
         console.log("✅  | " + username + " s'est connecté");
         res.redirect('/')
@@ -1051,11 +1019,11 @@ app.post('/send-mail-forgot', function (req, res){
   var email = htmlspecialchars(req.body.emailForgotPassword)
   if (email) {
     var hash = sha256('mastringinconnue' + Date.now());
-    console.log("UPDATE `user` SET `forgot_password`='" + hash + "' WHERE email='" + email + "'")
-    var sql  = "UPDATE `user` SET `forgot_password`='" + hash + "' WHERE email='" + email + "'";
+    console.log("UPDATE user SET `forgot_password`='" + hash + "' WHERE email='" + email + "'")
+    var sql  = "UPDATE user SET `forgot_password`='" + hash + "' WHERE email='" + email + "'";
     con.query(sql, function (err, users) {
       console.log("mdr")
-      send_mail('No reply <noreply@matcha.fr>', email,'Mot de passe oublié','<a href="local:8081/forgotten-password/' + hash + '">Clique pour récupérer ton mot de passe</a>')
+      send_mail_html('No reply <noreply@matcha.fr>', email,'Mot de passe oublié','<html><body><a href="local:8081/forgotten-password/' + hash + '">Clique pour récupérer ton mot de passe</a></body></html>')
         getFullLocationandrender(res, 'connexion')
       })
     }
@@ -1085,7 +1053,7 @@ app.post('/reset-password', function(req, res){
   {
     var Regexpassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{6,}$/g
 
-    if (new_password.length >= 6 && new_password.length <= 36 && Regexpassword.test(new_password)){
+    if (password.length >= 6 && password.length <= 36 && Regexpassword.test(password)){
       sql = "UPDATE `user` SET `password`='" + passwordHash.generate(password, { algorithm: 'whirlpool', iterations: 42}) + "' WHERE `forgot_password` = '" + hash + "' AND `email` = '" + email +  "'"
       console.log(sql);
       con.query(sql, function(err, res){})

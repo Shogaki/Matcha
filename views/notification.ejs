@@ -1,0 +1,16 @@
+<link href="/css/style.css" rel="stylesheet" type="text/css">
+<% include parts/header.ejs %>
+<div class="ui yellow segment">
+<div class="ui middle aligned divided list">
+<% for(var i=0; i<50 && i<values.length; i++) {%>
+  <div class="item">
+    <div class="right floated content">
+    </div>
+    <img class="ui avatar image" src="<%= values[i].img1 %>">
+    <div class="content">
+      <%= values[i].new == 1 ? "🔔" : "" %><%= values[i].login %> <%= (values[i].type == 0 ? " t'as liké " : (values[i].type == 1 ? " a visité ton profil" : (values[i].type == 2 ? " a quelque chose a te dire " : (values[i].type == 3 ? " match avec vous " : " a annulé son match " ))))%> (<%= values[i].time %>)
+    </div>
+  </div>
+  <% } %>
+</div>
+</div>
