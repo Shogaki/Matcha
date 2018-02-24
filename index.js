@@ -149,9 +149,21 @@ function getFullLocationandrender(res, page){
   {
     var ip = resp.on('data', function(ip)
     {
-      iplocate(ip).then((results) => {
-        res.render(page, {long: results.longitude, lat:results.latitude})
-      });
+      if (page == "connexion")
+      {
+        var sql4 = "SELECT latitude, longitude FROM user WHERE 1"
+        con.query(sql4, function (err, result) {
+          iplocate(ip).then((results) => {
+            res.render(page, {long: results.longitude, lat:results.latitude, value: result})
+          });
+        })
+      }
+      else
+      {
+        iplocate(ip).then((results) => {
+          res.render(page, {long: results.longitude, lat:results.latitude})
+        });
+      }
     });
   })
 }
@@ -370,7 +382,7 @@ function edit_email(id, email){
   }
 }
 function print_profile(login, res, req){
-  sql = "SELECT id, login, prenom, ville, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) AS dist, nom, sexe, or_h, or_f, or_a, bio, popularity, status, time, img1, img2, img3, img4, img5, birth_date FROM user WHERE login = '" + escapeHtml(req.params.username) + "'"
+  sql = "SELECT id, login, prenom, ville, longitude, latitude, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) AS dist, nom, sexe, or_h, or_f, or_a, bio, popularity, status, time, img1, img2, img3, img4, img5, birth_date FROM user WHERE login = '" + escapeHtml(req.params.username) + "'"
   con.query(sql, function (err, result) {
     if (!result)
       res.render('error', {error: 31})

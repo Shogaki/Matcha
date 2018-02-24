@@ -1,55 +1,25 @@
 <link href="/css/style.css" rel="stylesheet" type="text/css">
 <% include parts/visitor-header.ejs %>
-<div class="ui red message">Une erreur c est produite</div>
-<%= error %>
-<%if (error == 1) {%>  Pseudo trop court  <%}%>
+
 <div class="ui yellow center aligned segment" id="connexion-div">
   <i class="warning sign icon"></i>
-  Pseudo trop court !
+  <%if (error == 1) {%>  Pseudo trop court  <%}%>
+  <%if (error == 2) {%>  Pseudo trop long   <%}%>
+  <%if (error == 3) {%>  Pseudo déja utilisé <%}%>
+  <%if (error == 4) {%>  Mot de passe trop court  <%}%>
+  <%if (error == 5) {%>  Mot de passe trop long  <%}%>
+  <%if (error == 6) {%>  Mot de passe trop simple  <%}%>
+  <%if (error == 7) {%>  Email mal formaté  <%}%>
+  <%if (error == 8) {%>  Email déja utilisé  <%}%>
+  <%if (error == 9) {%>  Prenom trop long  <%}%>
+  <%if (error == 10) {%>  Nom trop long  <%}%>
+  <%if (error == 11) {%>  Toutes les données n'ont pas été renseignées  <%}%>
+  <%if (error == 20) {%>  Identifiants incorrects <%}%>
+  <%if (error == 21) {%>  Plusieurs comptes ont ce pseudo, contactez les admins a admin@camagru.fr <%}%>
+  <%if (error == 22) {%>  Mot de passe incorrect <%}%>
+  <%if (error == 30) {%>  Plusieurs personnes ont ce login, contactez les admins a admin@camagru.fr <%}%>
+  <%if (error == 31) {%>  Utilisateur inconnu <%}%>
+  <%if (error == 40) {%>  Pas de sexe renseigné <%}%>
+  <%if (error == 50) {%>  Le mot de passe renseigné ne correspond pas<%}%>
+  <%if (error == 51) {%> Votre Profil n'est pas suffisament complet pour acceder a cette page<%}%>
 </div>
-<%if (error == 2) {%>  Pseudo trop long  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Pseud trop long
-</div>
-<%if (error == 3) {%>  Pseudo déja utilisé  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Pseudo déja utilisé
-</div>
-<%if (error == 4) {%>  Mot de passe trop court  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Mot de passe trop court
-</div>
-<%if (error == 5) {%>  Mot de passe trop long  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Mot de passe trop long
-</div>
-<%if (error == 6) {%>  Mot de passe trop simple  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Mot de passe trop simple
-</div>
-<%if (error == 7) {%>  Email mal formaté  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Email mal formaté
-</div>
-<%if (error == 8) {%>  Email déja utilisé  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Email déja utilisé
-</div>
-<%if (error == 9) {%>  Prenom trop long  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Prenom trop long
-</div>
-<%if (error == 10) {%>  Nom trop long  <%}%>
-<div class="ui yellow center aligned segment" id="connexion-div">
-  <i class="warning sign icon"></i>
-  Nom trop long
-</div>
-<%if (error == 11) {%>  Toutes les données n'ont pas été renseignées  <%}%>

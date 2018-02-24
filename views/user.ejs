@@ -1,5 +1,15 @@
 <title><%= value.login %> - Matcha</title>
 <% include parts/header.ejs %>
+<style>
+       #map {
+        height: 200px;
+        width: 80%;
+        margin: auto;
+        min-width: 500px;
+        margin-top: 7px;
+       }
+    </style>
+      <div id=map class=row></div>
 <div style="width:80%;min-width:500px;max-width:1500px;margin:auto">
     <div class="ui celled grid">
         <div class="row">
@@ -82,7 +92,22 @@
         document.getElementById('like').innerHTML = "Like"
         socket.emit('vote', <%= value.id %>,-1);
       })
-      </script>
+      function initMap() {
+        var uluru = {lat: <%=value.latitude%>, lng: <%=value.longitude%>};
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 7.5,
+          center: uluru
+        });
+        var marker = new google.maps.Marker({
+          position: uluru,
+          map: map
+        });
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBwgRxtfHhxdYL6XVDQqfRSk_y5yNVffW0&callback=initMap">
+    </script>
   </div>
   <% } %>
+
 </div>
