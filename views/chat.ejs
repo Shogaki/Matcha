@@ -1,13 +1,14 @@
 <link href="/css/style.css" rel="stylesheet" type="text/css">
 <% include parts/header-chat.ejs %>
-<!-- List user => buttons -->
+<div class="ui yellow center aligned segment" style="max-width:900px;margin:auto;margin-top:50px;margin-bot:50px;">
+<%= (users.length == 0 ? "Vous devez matcher avec un utilisateur pour pouvoir chatter avec lui" : "")%>
 <% users.forEach(function(user){ %>
 <a href="http://localhost:8081/chat?match=<%= user.id %>" class="ui image label">
   <img src="<%= user.img1 %>">
   <%= user.login %>
 </a>
 <% }) %>
-
+</div>
 <% if (match) { %>
 <div class="ui yellow center aligned segment" id="connexion-div">
   <div class="item">
@@ -26,7 +27,7 @@
     <div class="ui blue message" style="text-align:left"> <%= message.text %> </div>
   <% } %>
 <% }) %>
-  </div>
+</div><br>
   <form>
     <div class="ui large icon input">
       <input id="message" type="text" name="message" placeholder="Message" required>
@@ -40,9 +41,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
 
 <script>
-
-/*global io, rivets, utils*/
-/*jslint browser: true*/
+/*
 var socket = io.connect("http://localhost:5000");
 var i, j;
 socket.on("<%= userId %>-<%= dstId %>", function (message) {
@@ -52,7 +51,7 @@ socket.on("<%= userId %>-<%= dstId %>", function (message) {
 socket.on("<%= dstId %>-<%= userId %>", function (message) {
   $("#message-list").append('<div class="ui blue message" style="text-align:left">' + message.message + '</div>');
 });
-
+*/
 function ShowNotif(titre, TheText)
 {
   var options = {
@@ -84,9 +83,6 @@ $("form").submit(function(e){
     message: text
   });
   $('#message').val("");
-
-  //
-  console.log(text);
   e.preventDefault();
 });
 

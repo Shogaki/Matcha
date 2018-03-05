@@ -44,8 +44,8 @@
     </select>
   </div>
   <div class="field">
-    <label>Ta date de naissance</label>
-    <input name="birth" type="date" required value=<%= values[0].birth_date %>>
+    <label>Ta date de naissance (vous devez avoir plus de 18 ans)</label>
+    <input name="birth" type="date" required >
   </div>
   <div class="field">
     <label>E-mail</label>
@@ -78,7 +78,7 @@
   </div>
 </div>
 <div class="field">
-  <label>Tes Hashtag</label>
+  <label>Tes Tags (Pour supprimer vos tags, rendez vous sur le profil)</label>
   <input type="text" name="tags" placeholder="ex : #jssuLink, #LeBoss..">
 </div>
   <div>
@@ -86,6 +86,7 @@
     <label>Ta bio</label>
     <textarea form="edit" name=bio placeholder="J'etais dans le metro et puis j'ai cramé"><%=values[0].bio%></textarea>
   </div>
+  Vos photos<br>
     <div class="five fields">
       <div class="field">
     <label for="img1" class="ui icon button">

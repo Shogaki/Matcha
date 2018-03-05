@@ -1,7 +1,7 @@
 <link href="/css/style.css" rel="stylesheet" type="text/css">
 <% include parts/header.ejs %>
-<div class="ui yellow segment">
-<div class="ui middle aligned divided list">
+<div class="ui yellow segment" style="max-width:900px;margin:auto;margin-top:50px;margin-bot:50px;">
+<div class="ui middle aligned divided list" style="max-width:900px;">
 <% for(var i=0; i<50 && i<values.length; i++) {%>
   <div class="item">
     <div class="right floated content">
@@ -11,6 +11,10 @@
       <%= values[i].login %> (<%= values[i].time %>)
     </div>
   </div>
-  <% } %>
+  <% } if (values.length == 0){%>
+    <%= type == "visite" ? "Personne n'as visité votre profil" : "" %>
+    <%= type == "likes" ? "Personne n'as liké votre profil"  : "" %>
+    <%= type == "my_likes" ? "Vous n'avez liké personne"  : "" %>
+    <%}%>
 </div>
 </div>

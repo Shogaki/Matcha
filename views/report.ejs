@@ -1,0 +1,26 @@
+<link href="/css/style.css" rel="stylesheet" type="text/css">
+<% include parts/visitor-header.ejs %>
+<title>Report</title>
+
+<br>
+  <div id="connexion-div">
+    <h1>Report</h1>
+    <div class="form-container">
+      <form action="/report-back" method="post">
+        <div class="field">
+          <input class="input-form" type="text" name="username" value=<%= username %> required>
+          <span class="highlight"></span>
+          <span class="bar"></span>
+          <label class="input-label">Pseudo</label>
+        </div>
+        <div class="field">
+          <input class="input-form" type="text" name="reason" required>
+          <span class="highlight"></span>
+          <span class="bar"></span>
+          <label class="input-label">Motif</label>
+        </div>
+        <input type="submit" value="Report" name="connect" class="button" style="vertical-align:middle"></button>
+      </form>
+    </div><br>
+    </body>
+    </html>

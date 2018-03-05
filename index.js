@@ -1,12 +1,15 @@
 //INITIAL CONFIGURATION
 
 var express           = require('express')
+var favicon           = require('serve-favicon')
+var path              = require('path')
 var app               = express();
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')))
 var http              = require('http').Server(app);
 module.exports.io     = require('socket.io')(http);
 http.listen(5000);
 require('./socket');
-var http              = require('http')
+var http              = require('http');
 var fs                = require('fs');
 var parseurl          = require('parseurl')
 var cookieParser      = require('cookie-parser')
@@ -30,11 +33,15 @@ var con               = mysql.createConnection({
   password:"123456",
   database:"matcha"
 })
+var admin_email       = "comedelarocque@gmail.com"
 server = require('http').createServer(app),
     io = require('socket.io').listen(server),
     ent = require('ent')
 con.connect(function(err) {
-  if (err) throw err
+  if (err)
+  {
+    console.log("❌  Veuillez initialier la base de donnees (db.sql)");
+  }
   console.log("✅  | Base de donnée OK")
 })
 app.use(bodyParser.json())
@@ -86,6 +93,7 @@ function _ago2(ago) {
     else
       return ("il y a " + Math.floor(diff / 31536000) + " an" + (diff < 63072000 ? "" : "s"))
 }
+
 function _ago(status, ago) {
     var now = Math.floor(Date.now() / 1000);
     ago = Date.parse(ago)/1000
@@ -108,6 +116,8 @@ function _ago(status, ago) {
       return ("🔴 Déconnecté depuis " + Math.floor(diff / 31536000) + " an" + (diff < 63072000 ? "" : "s"))
 }
 function reset_status(id){
+  if (id !== undefined)
+  {
   var timeStamp = Math.floor(Date.now() / 1000);
   var sql       = "UPDATE `user` SET `status`= 1,`time`= CURRENT_TIMESTAMP WHERE id = " + id
   con.query(sql, function (err, result) {
@@ -115,7 +125,23 @@ function reset_status(id){
       console.log(err)
   })
 }
+}
+
+function reset_status_and_locate_without_city(id, lat, long){
+  if (id !== undefined && lat !== undefined && long !== undefined)
+  {
+  var timeStamp = Math.floor(Date.now() / 1000);
+  var sql       = "UPDATE `user` SET `longitude`=" + long + ",`latitude`=" + lat + ", `status`= 1,`time`= CURRENT_TIMESTAMP WHERE id = " + id
+  con.query(sql, function (err, result) {
+    if (err)
+      console.log(err)
+  })
+}
+}
+
 function reset_status_and_locate(id, lat, long, city){
+  if (id !== undefined && lat !== undefined && long !== undefined && city !== undefined)
+  {
   var timeStamp = Math.floor(Date.now() / 1000);
   var sql       = "UPDATE `user` SET `longitude`=" + long + ",`latitude`=" + lat + ",`ville`='" + city + "', `status`= 1,`time`= CURRENT_TIMESTAMP WHERE id = " + id
   con.query(sql, function (err, result) {
@@ -123,13 +149,17 @@ function reset_status_and_locate(id, lat, long, city){
       console.log(err)
   })
 }
+}
 function reset_status_disconnect(id){
+  if (id !== undefined)
+  {
   var timeStamp = Math.floor(Date.now() / 1000);
   var sql       = "UPDATE `user` SET `status`= 0,`time`= CURRENT_TIMESTAMP WHERE id = " + id
   con.query(sql, function (err, result) {
     if (err)
       console.log(err)
   })
+}
 }
 function dateDiff(birthday){
   birthday = new Date(birthday);
@@ -267,7 +297,6 @@ function edit_pseudo(id, new_pseudo){
   if (new_pseudo.length < 24 && new_pseudo.length > 3)
   {
     var sql = "UPDATE `user` SET `login`= '" + new_pseudo + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
@@ -276,7 +305,6 @@ function edit_password(id, new_password){
 
   if (new_password.length >= 6 && new_password.length <= 36 && Regexpassword.test(new_password)){
     var sql = "UPDATE `user` SET `password`= '" + passwordHash.generate(new_password, { algorithm: 'whirlpool', iterations: 42}) + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
@@ -284,7 +312,6 @@ function edit_prenom(id, new_prenom){
   if (new_prenom.length < 36 && new_prenom.length > 3)
   {
     var sql = "UPDATE `user` SET `prenom`= '" + new_prenom + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
@@ -292,83 +319,80 @@ function edit_nom(id, new_nom){
   if (new_nom.length < 36 && new_nom.length > 3)
   {
     var sql = "UPDATE `user` SET `nom`= '" + new_nom + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
 function edit_birthdate(id, new_birthdate){
-  if (Date.parse(new_birthdate) !== NaN)
+  var min_age = new Date();
+  var max_age = new Date();
+  min_age.setFullYear(min_age.getFullYear() - 18)
+  max_age.setFullYear(max_age.getFullYear() - 100)
+
+  if (Date.parse(new_birthdate) !== NaN && Date.parse(new_birthdate) <= min_age && Date.parse(new_birthdate) >= max_age)
   {
     var sql = "UPDATE user SET birth_date = '" + new_birthdate + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function (err, res){})
+  }
+  else {
+    console.log("t tro jeune bb");
   }
 }
 function edit_img1(id, file){
-  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-4) == "jpeg"){
     path = "public/img/" + id + "_1" + Math.floor(new Date() / 1000)+ ".jpg"
     file.mv(path)
     var sql = "UPDATE `user` SET `img1`= '" + path.substr(6) + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
 function edit_img2(id, file){
-  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-4) == "jpeg"){
     path = "public/img/" + id + "_2" + Math.floor(new Date() / 1000)+ ".jpg"
     file.mv(path)
     var sql = "UPDATE `user` SET `img2`= '" + path.substr(6) + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
 function edit_img3(id, file){
-  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-4) == "jpeg"){
     path = "public/img/" + id + "_3" + Math.floor(new Date() / 1000)+ ".jpg"
     file.mv(path)
     var sql = "UPDATE `user` SET `img3`= '" + path.substr(6) + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
 function edit_img4(id, file){
-  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-4) == "jpeg"){
     path = "public/img/" + id + "_4" + Math.floor(new Date() / 1000)+ ".jpg"
     file.mv(path)
     var sql = "UPDATE `user` SET `img4`= '" + path.substr(6) + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
 function edit_img5(id, file){
-  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-3) == "jpeg"){
+  if (file.name.substr(-3) == "jpg" || file.name.substr(-3) == "png" || file.name.substr(-4) == "jpeg"){
     path = "public/img/" + id + "_5" + Math.floor(new Date() / 1000)+ ".jpg"
     file.mv(path)
     var sql = "UPDATE `user` SET `img5`= '" + path.substr(6) + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function(err, res){})
   }
 }
 function edit_sexual_orientation(id, or_h, or_f, or_a){
   var sql = "UPDATE user SET or_h = " + or_h + ", or_f = " + or_f + ", or_a = " + or_a + " WHERE id = " + id
-  console.log(sql);
   con.query(sql, function(err, res){})
 }
 function edit_ville(id, ville){
   var sql = "UPDATE user SET ville = '" + ville + "' WHERE id = " + id
-  console.log(sql);
   con.query(sql, function(err, res){})
 }
 function edit_sexe(id, sexe){
   var sql = "UPDATE user SET sexe = " + sexe + " WHERE id = " + id
-  console.log(sql);
   con.query(sql, function (err, res){})
 }
 function edit_bio(id, bio){
   if (bio.length <= 140)
   {
     var sql = "UPDATE user SET bio = '" + bio + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function (err, res){})
   }
 }
@@ -377,12 +401,12 @@ function edit_email(id, email){
   if (Regexemail.test(email))
   {
     var sql = "UPDATE user SET email = '" + email + "' WHERE id = " + id
-    console.log(sql);
     con.query(sql, function (err, res){})
   }
 }
-function print_profile(login, res, req){
-  sql = "SELECT id, login, prenom, ville, longitude, latitude, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) AS dist, nom, sexe, or_h, or_f, or_a, bio, popularity, status, time, img1, img2, img3, img4, img5, birth_date FROM user WHERE login = '" + escapeHtml(req.params.username) + "'"
+function print_profile(login, res, req, me){
+  sql = "SELECT cible.id, cible.login, cible.prenom, cible.ville, cible.longitude, cible.latitude, FLOOR(get_distance_metres(connected.latitude, connected.longitude, cible.latitude, cible.longitude) / 1000) AS dist, cible.nom, cible.sexe, cible.or_h, cible.or_f, cible.or_a, cible.bio, cible.popularity, cible.status, cible.time, cible.img1, cible.img2, cible.img3, cible.img4, cible.img5, cible.birth_date FROM user AS cible INNER JOIN user AS connected ON connected.id = " + req.session.user_id + " WHERE cible.login = '" + escapeHtml(login) + "'"
+
   con.query(sql, function (err, result) {
     if (!result)
       res.render('error', {error: 31})
@@ -393,15 +417,13 @@ function print_profile(login, res, req){
         visit(req.session.user_id, result[0].id)
         result[0].birth_date = dateDiff(result[0].birth_date)
         result[0].time = _ago(result[0].status, result[0].time)
-        console.log("SELECT vote_user.value as user_value, vote_profile.value as profile_value FROM `vote` vote_user LEFT JOIN vote as vote_profile ON vote_profile.id_dst = vote_user.id_src && vote_profile.id_src = vote_user.id_dst WHERE vote_user.id_src = " + req.session.user_id + " && vote_user.id_dst = " + result[0].id)
         var sql = "SELECT vote_user.value as user_value, vote_profile.value as profile_value FROM `vote` vote_user LEFT JOIN vote as vote_profile ON vote_profile.id_dst = vote_user.id_src && vote_profile.id_src = vote_user.id_dst WHERE vote_user.id_src = " + req.session.user_id + " && vote_user.id_dst = " + result[0].id
         con.query(sql, function (err, result2) {
-          console.log(result2)
           if (result2[0] !== undefined){
-            res.render('user', {value: result[0], tags: tags, id: req.session.user_id, matched:(result2[0].user_value == 1 && result2[0].profile_value == 1 ? 1 : 0), liked_user: (result2[0].profile_value == 1 ? 1 : 0),liked_by_user: (result2[0].user_value == 1 ? 1 : 0), ignore:(result2[0].user_value == 0 ? 1 : 0)})
+            res.render('user', {value: result[0], tags: tags, id: req.session.user_id, matched:(result2[0].user_value == 1 && result2[0].profile_value == 1 ? 1 : 0), liked_user: (result2[0].profile_value == 1 ? 1 : 0),liked_by_user: (result2[0].user_value == 1 ? 1 : 0), ignore:(result2[0].user_value == 0 ? 1 : 0), me: me})
           }
           else {
-            res.render('user', {value: result[0], tags: tags, id: req.session.user_id, matched: 0, liked_user: 0, liked_by_user: 0, ignore:0})
+            res.render('user', {value: result[0], tags: tags, id: req.session.user_id, matched: 0, liked_user: 0, liked_by_user: 0, ignore:0, me: me})
           }
         })
       })
@@ -478,6 +500,7 @@ app.get('/', function(req, res) {
   var post          = req.body
   if (sess.user_id)
   {
+    reset_status(req.session.user_id)
     con.query('SELECT * FROM user WHERE id = ' + sess.user_id , function(err, result){
       if (result[0].birth_date == null || result[0].img1 == null)
         res.redirect('edit-profile')
@@ -505,7 +528,7 @@ app.get('/', function(req, res) {
           var sort          = (post.sort !== undefined ? post.sort : "default" );
           var tags          = tagslist.replace(/[ ]*/g, '').substr(1).split('#')
           con.query("SELECT longitude, latitude FROM user WHERE id = " + sess.user_id, function(err, gps){
-            var sql           = "SELECT count(vote.id) as nb_vote, " + (post.tags != "" ? "count(DISTINCT user_tag.id) as nb_tags, " : " " ) + "user.id, user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('"+ gps[0].latitude +"', '"+ gps[0].longitude +"', latitude, longitude) / 1000) dist, img1 FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id " : "") + " LEFT JOIN vote ON vote.id_src = user.id || vote.id_dst = user.id WHERE ("
+            var sql           = "SELECT count(vote.id) as nb_vote, " + (post.tags != "" ? "count(DISTINCT user_tag.id) as nb_tags, " : " " ) + "user.id, user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('"+ gps[0].latitude +"', '"+ gps[0].longitude +"', latitude, longitude) / 1000) dist, img1 FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id " : "") + " LEFT JOIN vote ON vote.id_src = user.id || vote.id_dst = user.id WHERE (user.birth_date IS NOT NULL AND user.img1 IS NOT NULL AND user.longitude IS NOT NULL AND user.latitude IS NOT NULL) AND ("
             if (or_h == 1)  {
               sql += (n != 0 ? " AND " : "") + " user.sexe = 1 "
               n++;
@@ -524,11 +547,8 @@ app.get('/', function(req, res) {
             {
               var birthdateMin  = new Date();
               var birthdateMax  = new Date();
-              console.log("1 : " + birthdateMin + " " + birthdateMax)
-              console.log("2 : " + ageMin + " " + ageMax)
               birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
               birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
-              console.log("3 : " + birthdateMin, + " " + birthdateMax)
               sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
             }
             else if (ageMin == "" && ageMax != "")
@@ -568,11 +588,12 @@ app.get('/', function(req, res) {
               sql+= " ORDER BY popularity DESC, " + (tagslist != "" ? "nb_tags," : "") + " dist ASC, birth_date DESC"
             else if (sort == "age")
               sql+=" ORDER BY birth_date DESC, " + (tagslist != "" ? "nb_tags," : "") + " popularity DESC, dist ASC"
-            else if (sort == "dist")
-              sql+=" ORDER BY FLOOR(dist / 100) ASC, " + (tagslist != "" ? "nb_tags," : "") + " ABS( " + user_pop + " - popularity) DESC, birth_date DESC"
+            else if (sort == "tags")
+                sql+=" ORDER BY " + (tagslist != "" ? "nb_tags," : "") + " FLOOR(dist / 50) ASC, FLOOR(popularity / 100) DESC, birth_date DESC"
             else
-              sql+=" ORDER BY " + (tagslist != "" ? "nb_tags," : "") + " FLOOR(dist / 50) ASC, FLOOR(popularity / 100) DESC, birth_date DESC"
-            console.log(sql)
+              sql+=" ORDER BY FLOOR(dist / 100) ASC, " + (tagslist != "" ? "nb_tags," : "") + " FLOOR(popularity / 100) DESC, birth_date DESC"
+
+
             con.query(sql, function (err, result) {
               if (err) throw err
             if (result.length == 0)
@@ -592,6 +613,25 @@ app.get('/', function(req, res) {
   else
     res.redirect('/connexion')
 })
+app.get('/delete-tags/:tag', function(req, res){
+  if(req.session.user_id)
+  {
+  tag = req.params.tag;
+  sql = "SELECT id FROM tags WHERE name = '" + tag + "'";
+  con.query(sql, function(err, resultat)
+  {
+    if (resultat !== undefined)
+    {
+      sql = "DELETE FROM `user_tag` WHERE id_user = " + req.session.user_id + " AND id_tag = " + resultat[0].id
+
+      con.query(sql, function(err, resultat){})
+    }
+  })
+  res.redirect('/profil/me')
+  }
+  else
+    res.redirect('')
+})
 app.get('/profil', function(req, res){
     res.redirect('/')
 })
@@ -599,7 +639,18 @@ app.get('/profil/:username', function(req, res) {
 
   if (req.session.user_id != undefined)
   {
-    print_profile(escapeHtml(req.params.username), res, req)
+    reset_status(req.session.user_id)
+    if (req.params.username == "me")
+    {
+      var sql = "SELECT login FROM user WHERE id = " + req.session.user_id;
+
+      con.query(sql, function(err, resultat){
+        var log = (resultat[0].login)
+        print_profile(log, res, req, 1)
+      })
+    }
+    else
+      print_profile(escapeHtml(req.params.username), res, req, 0)
   }
   else
     res.redirect('/connexion')
@@ -611,6 +662,7 @@ app.get('/visites', function(req, res){
   if (req.session == undefined || req.session.user_id === undefined)
     res.redirect('connexion');
   else{
+    reset_status(req.session.user_id)
     sql = "SELECT DISTINCT user.login, user.img1, visite.time FROM visite INNER JOIN user ON visite.id_visiteur = user.id WHERE user.id != " + req.session.user_id + " AND visite.id_visite = " + req.session.user_id + " ORDER BY time ASC"
     con.query(sql, function(err, resultat){
       if (resultat !== undefined)
@@ -618,7 +670,7 @@ app.get('/visites', function(req, res){
         resultat.forEach(function (element){
           element.time = _ago2(element.time);
         })
-        res.render('visite', {id: req.session.user_id, values: resultat})
+        res.render('visite', {id: req.session.user_id, values: resultat, type:"visite"})
       }
       else {
         res.redirect('/')
@@ -630,6 +682,7 @@ app.get('/likes', function(req, res){
   if (req.session == undefined || req.session.user_id === undefined)
     res.redirect('connexion');
   else{
+    reset_status(req.session.user_id)
     sql = "SELECT DISTINCT user.login, vote.id, user.img1, vote.time FROM vote INNER JOIN user ON vote.id_src = user.id WHERE user.id != " + req.session.user_id + " AND vote.id_dst = " + req.session.user_id + " AND value = 1 ORDER BY vote.id DESC"
     con.query(sql, function(err, resultat){
       if (resultat !== undefined)
@@ -637,8 +690,7 @@ app.get('/likes', function(req, res){
         resultat.forEach(function (element){
           element.time = _ago2(element.time);
         })
-        res.render('visite', {id: req.session.user_id, values: resultat})
-        con.query("UPDATE ")
+        res.render('visite', {id: req.session.user_id, values: resultat, type:"likes"})
       }
       else {
         res.redirect('/')
@@ -651,6 +703,7 @@ app.get('/notifications', function(req, res){
   if (req.session == undefined || req.session.user_id === undefined)
     res.redirect('connexion');
   else{
+    reset_status(req.session.user_id)
     sql = "SELECT user.login, user.img1, notification.type, notification.new, notification.time FROM notification INNER JOIN user ON user.id = notification.src WHERE notification.dst = " + req.session.user_id + " ORDER by notification.time DESC"
     con.query(sql, function(err, resultat){
       if (resultat !== undefined)
@@ -672,6 +725,7 @@ app.get('/my-likes', function(req, res){
   if (req.session == undefined || req.session.user_id === undefined)
     res.redirect('connexion');
   else{
+    reset_status(req.session.user_id)
     sql = "SELECT DISTINCT user.login, vote.id, user.img1, vote.time FROM vote INNER JOIN user ON vote.id_dst = user.id WHERE vote.id_src = " + req.session.user_id + " AND value = 1 ORDER BY vote.id DESC"
     con.query(sql, function(err, resultat){
       if (resultat !== undefined)
@@ -679,7 +733,7 @@ app.get('/my-likes', function(req, res){
         resultat.forEach(function (element){
           element.time = _ago2(element.time);
         })
-        res.render('visite', {id: req.session.user_id, values: resultat})
+        res.render('visite', {id: req.session.user_id, values: resultat, type: "my_likes"})
       }
       else {
         res.redirect('/')
@@ -692,8 +746,9 @@ app.get('/inscription', function(req, res){
 app.get('/search', function(req, res){
   if (req.session == undefined || req.session.user_id === undefined)
     res.redirect('connexion');
-  else
+  else{
     res.render('search', {id: req.session.user_id})
+  }
  })
 app.get('/edit-profile', function(req, res){
   if (req.session == undefined || req.session.user_id === undefined)
@@ -703,21 +758,20 @@ app.get('/edit-profile', function(req, res){
     sql = "SELECT * FROM user WHERE id = " + req.session.user_id
     con.query(sql, function(err, result){
       result.birth_date = formatDate(result.birth_date)
-      console.log(result.birth_date)
       res.render('edit-profile', {id: req.session.user_id, values: result})
     })
 
   }
 })
 app.get('/chat', function(req, res) {
-  console.log(req.session.user_id);
   if (!req.session.user_id) {
     return res.redirect('/connexion');
   }
+  sql = " UPDATE `message` SET `new`= 0 WHERE id_dst = " + req.session.user_id;
+  con.query(sql);
   // get users
-  var sql = "SELECT user.id, user.login, user.nom, user.prenom, user.img1 FROM vote as vote1 LEFT OUTER JOIN vote as vote2 ON vote2.`id_src` = vote1.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src INNER JOIN user ON user.id = vote1.id_dst WHERE vote1.id_src=" + req.session.user_id
+  var sql = "SELECT USER.id, USER.login, USER.nom, USER.prenom, USER.img1 FROM vote AS vote1 LEFT OUTER JOIN vote AS vote2 ON vote2.`id_src` = vote1.`id_dst` INNER JOIN USER ON USER.id = vote1.id_dst WHERE vote1.id_src = " + req.session.user_id + " AND vote2.id_dst = " + req.session.user_id + " AND vote2.value = 1 AND vote1.value = 1 AND vote1.id_dst = vote2.id_src"
   con.query(sql, function (err, users) {
-    console.log("[USER]", users);
     var match = users.filter(function (user) {
       return user.id == req.query.match;
     })[0];
@@ -727,7 +781,6 @@ app.get('/chat', function(req, res) {
 
     var sql2 ="SELECT * FROM `message` WHERE `id_src` IN (" + req.session.user_id + "," + req.query.match + ") AND `id_dst` IN (" + req.session.user_id + "," + req.query.match + ")"
     con.query(sql2, function(err, messages) {
-      console.log(messages);
       res.render('chat', { userId: req.session.user_id, dstId: req.query.match || -1, users: users, match: match, messages: messages });
     })
 
@@ -785,32 +838,30 @@ app.post('/edit-profile-back', function(req, res){
           text += (result[0].sexe == 1 ? "Tu es un homme de " : (result[0].sexe == 2 ? "Tu es une femme de " : "Tu as ")) + dateDiff(result[0].birth_date) + " ans et tu es attiré par "
           text += (result[0].or_h == 1 ? "les hommes " : "") + (result[0].or_f == 1 ? "les femmes " : "") + (result[0].or_a == 1 ? "les non binaires\n" : "\n")
           text += "Tu viens de " + result[0].ville + " et tu te décris ainsi :" + result[0].bio
-          console.log('"Thomas, de Matcha 🍌" <thomas@matcha.fr>' +  "\"" + result[0].prenom + " " + result[0].nom + "\" <" + result[0].email + ">" + "Modification de tes infos" + text)
           send_mail('"Thomas, de Matcha 🍌" <thomas@matcha.fr>', "\"" + result[0].prenom + " " + result[0].nom + "\" <" + result[0].email + ">", "Modification de tes infos", text)
       })}, 5000);
       var tags   = post.tags.replace(/[ ]*/g, '').substr(1).split('#')
       tags.forEach(function(element){
-        console.log('SELECT id FROM tags WHERE tags.name = "' + element + '"')
+        if (element !== "")
+        {
         con.query('SELECT id FROM tags WHERE tags.name = "' + element + '"', function(err, resultat){
           if (resultat[0] === undefined || resultat[0].id === undefined)
           {
-            console.log('INSERT INTO tags (name) VALUES ("' + element + '")')
             con.query('INSERT INTO tags (name) VALUES ("' + element + '")', function(err, resultat2){
-              console.log('INSERT INTO user_tag (`id_tag`, `id_user`) VALUES (' + resultat2.insertId + ', ' + id + ')')
               con.query('INSERT INTO user_tag (`id_tag`, `id_user`) VALUES (' + resultat2.insertId + ', ' + id + ')', function(err, resultat){})
             })
           }
           else
           {
-            console.log('INSERT INTO user_tag (id_tag, id_user) VALUES ('+ resultat[0].id + ', ' + id + ')')
             con.query('INSERT INTO user_tag (id_tag, id_user) VALUES ('+ resultat[0].id + ', ' + id + ')', function(err, res){})
           }
         })
-        })
+      }
+    })
       res.redirect('/')
     }
     else
-      res.render('error', {error: 8})
+      res.render('error', {error: 20})
   })
 })
 app.get('/favicon.ico', function(req, res) {})
@@ -828,7 +879,7 @@ app.post('/search-back', function(req, res){
   var n             = 0;
   var sort          = post.sort;
   var tags          = post.tags.replace(/[ ]*/g, '').substr(1).split('#')
-  var sql           = "SELECT count(vote.id) as nb_vote, " + (post.tags != "" ? "count(DISTINCT user_tag.id) as nb_tags, " : " " ) + "user.id, user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres('48.8966066', '2.318501400000059', latitude, longitude) / 1000) dist, img1 FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " LEFT JOIN vote ON vote.id_src = user.id || vote.id_dst = user.id WHERE "
+  var sql           = "SELECT count(vote.id) as nb_vote, " + (post.tags != "" ? "count(DISTINCT user_tag.id) as nb_tags, " : " " ) + "user.id, user.login, user.ville, user.sexe, user.status, user.time, user.bio, user.popularity, user.birth_date, FLOOR(get_distance_metres(connected.latitude, connected.longitude, user.latitude, user.longitude) / 1000) dist, user.img1 FROM user " + (post.tags != "" ? " INNER JOIN user_tag ON user_tag.id_user = user.id INNER JOIN tags ON user_tag.id_tag = tags.id" : "") + " INNER JOIN user AS connected ON connected.id = " + req.session.user_id + "  LEFT JOIN vote ON vote.id_src = user.id || vote.id_dst = user.id WHERE (user.birth_date IS NOT NULL AND user.img1 IS NOT NULL AND user.longitude IS NOT NULL AND user.latitude IS NOT NULL) AND  "
   if (or_h + or_f + or_a != 0)
   {
     sql+="("
@@ -852,19 +903,19 @@ app.post('/search-back', function(req, res){
     var birthdateMax  = new Date();
     birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
     birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
-    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
+    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(user.birth_date BETWEEN '" + birthdateMin.toISOString().substring(0, 10) + "' AND '" + birthdateMax.toISOString().substring(0, 10) + "')"
   }
   else if ((ageMin == "" || isNaN(ageMin)) && ageMax != "" && !isNaN(ageMax))
   {
     var birthdateMin  = new Date();
     birthdateMin.setDate(today.getDate() - (365 * parseInt(ageMax)))
-    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date >= '" + birthdateMin.toISOString().substring(0, 10) + "')"
+    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(user.birth_date >= '" + birthdateMin.toISOString().substring(0, 10) + "')"
   }
   else if (ageMin != "" && !isNaN(ageMin) && (ageMax == "" || isNaN(ageMax)))
   {
     var birthdateMax  = new Date();
     birthdateMax.setDate(today.getDate() - (365 * parseInt(ageMin)))
-    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(birth_date <= '" + birthdateMax.toISOString().substring(0, 10) + "')"
+    sql += (or_h + or_f + or_a != 0 ?  " AND " : "") + "(user.birth_date <= '" + birthdateMax.toISOString().substring(0, 10) + "')"
   }
   if (!isNaN(popMin))  {
     sql += (or_h + or_f + or_a != 0 || ageMin != "" || ageMax != "" ?  " AND " : "") + " user.popularity > " + popMin
@@ -883,14 +934,13 @@ app.post('/search-back', function(req, res){
   if (distMax != "" && !isNaN(distMax))
     sql += " AND DIST < " + distMax
   if (sort == "pop")
-    sql+= " ORDER BY FLOOR(popularity / 100) DESC, " + (post.tags != "" ? "nb_tags," : "") + " FLOOR(dist / 50) ASC, birth_date DESC"
+    sql+= " ORDER BY FLOOR(user.popularity / 100) DESC, " + (post.tags != "" ? "nb_tags," : "") + " FLOOR(dist / 50) ASC, user.birth_date DESC"
   else if (sort == "age")
-    sql+=" ORDER BY FLOOR(birth_date) DESC, " + (post.tags != "" ? "nb_tags," : "") + " FLOOR(popularity / 100) DESC, FLOOR(dist / 50) ASC"
+    sql+=" ORDER BY FLOOR(user.birth_date) DESC, " + (post.tags != "" ? "nb_tags," : "") + " FLOOR(user.popularity / 100) DESC, FLOOR(dist / 50) ASC"
   else if (sort == "dist")
-    sql+=" ORDER BY FLOOR(dist / 50) ASC, " + (post.tags != "" ? "nb_tags," : "") + " FLOOR(popularity / 100) DESC, birth_date DESC"
+    sql+=" ORDER BY FLOOR(dist / 50) ASC, " + (post.tags != "" ? "nb_tags," : "") + " FLOOR(user.popularity / 100) DESC, user.birth_date DESC"
   else
-    sql+=" ORDER BY " + (post.tags != "" ? "nb_tags," : "") + " FLOOR(dist / 50) ASC, FLOOR(popularity / 100) DESC, birth_date DESC"
-    console.log(sql)
+    sql+=" ORDER BY " + (post.tags != "" ? "nb_tags," : "") + " FLOOR(dist / 50) ASC, FLOOR(user.popularity / 100) DESC, user.birth_date DESC"
   con.query(sql, function (err, result) {
     if (err) throw err
     if (result.length == 0)
@@ -906,11 +956,16 @@ app.post('/search-back', function(req, res){
 })
 app.get('/search-back/:page', function(req, res)
 {
+  if (req.session.user_id)
+  {
+  if (parseInt(req.params.page) > 1000 || !(parseInt(req.params.page)) || parseInt(req.params.page) < 0)
+    res.redirect('/')
+  else
+  {
   var sess  = req.session
   var sql   = sess.last_search
   var page  = parseInt(req.params.page)
-  console.log(page)
-  con.query(sql + " LIMIT 10 OFFSET " + ((req.params.page * 10) - 10), function (err, result) {
+  con.query(sql + " LIMIT 10 OFFSET " + ((page * 10) - 10), function (err, result) {
     if (err) throw err
     if (result.length == 0)
       res.render('search', {id: req.session.user_id})
@@ -919,9 +974,9 @@ app.get('/search-back/:page', function(req, res)
       result[j].status = _ago(result[j].status, result[j].time)
       result[j].birth_date = dateDiff(result[j].birth_date)
     }
-    console.log(req.session)
     res.render('result-search', {id: req.session.user_id, values: result, initialdata: req.body, nbresult:result.length, last_page:page - 1, next_page: page + 1})
   }})
+}}
 })
 app.post('/inscription-back',function(req,res){
   var sess          = req.session
@@ -991,7 +1046,6 @@ app.post('/connexion-back',function(req,res){
   var password = htmlspecialchars(req.body.mdp)
   var latitude = htmlspecialchars(req.body.latitude)
   var longitude = htmlspecialchars(req.body.longitude)
-  var ville = htmlspecialchars(req.body.city)
   var sql = "SELECT id, password FROM user WHERE login = '" + username + "'";
   con.query(sql, function (err, result) {
     if (err)
@@ -1000,10 +1054,8 @@ app.post('/connexion-back',function(req,res){
     {
       if (passwordHash.verify(password, result[0].password))
       {
-        console.log(result[0].id)
         sess.user_id = result[0].id;
-        console.log(sess.user_id)
-        reset_status_and_locate(sess.user_id, latitude, longitude, ville)
+        reset_status_and_locate_without_city(sess.user_id, latitude, longitude)
         console.log("✅  | " + username + " s'est connecté");
         res.redirect('/')
       }
@@ -1031,11 +1083,10 @@ app.post('/send-mail-forgot', function (req, res){
   var email = htmlspecialchars(req.body.emailForgotPassword)
   if (email) {
     var hash = sha256('mastringinconnue' + Date.now());
-    console.log("UPDATE user SET `forgot_password`='" + hash + "' WHERE email='" + email + "'")
     var sql  = "UPDATE user SET `forgot_password`='" + hash + "' WHERE email='" + email + "'";
+
     con.query(sql, function (err, users) {
-      console.log("mdr")
-      send_mail_html('No reply <noreply@matcha.fr>', email,'Mot de passe oublié','<html><body><a href="local:8081/forgotten-password/' + hash + '">Clique pour récupérer ton mot de passe</a></body></html>')
+      send_mail_html('No reply <noreply@matcha.fr>', email,'Mot de passe oublié','<html><body><a href="http://localhost:8081/forgotten-password/' + hash + '">Clique pour récupérer ton mot de passe</a></body></html>')
         getFullLocationandrender(res, 'connexion')
       })
     }
@@ -1043,9 +1094,7 @@ app.post('/send-mail-forgot', function (req, res){
 app.get('/forgotten-password/:hash', function(req, res){
   var hash = htmlspecialchars(req.params.hash)
   sql = "SELECT count(id) AS nb FROM user WHERE forgot_password = '" + hash + "'"
-  console.log(sql)
   con.query(sql, function(err, result){
-    console.log(result)
     if (result !== undefined)
     {
       res.render('forgotten-password', {hash:hash})
@@ -1060,16 +1109,16 @@ app.post('/reset-password', function(req, res){
   var hash = htmlspecialchars(req.body.hash)
   var email = htmlspecialchars(req.body.email)
   var password = htmlspecialchars(req.body.password)
-  console.log(hash + " " + email + " " + password)
   if (hash !== undefined && email !== undefined && password != undefined)
   {
     var Regexpassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{6,}$/g
 
     if (password.length >= 6 && password.length <= 36 && Regexpassword.test(password)){
       sql = "UPDATE `user` SET `password`='" + passwordHash.generate(password, { algorithm: 'whirlpool', iterations: 42}) + "' WHERE `forgot_password` = '" + hash + "' AND `email` = '" + email +  "'"
-      console.log(sql);
+
       con.query(sql, function(err, res){})
     }
+    res.redirect('/')
   }
 })
 
@@ -1088,6 +1137,28 @@ app.get('/logout',function(req,res){
       }
     })
   })
+})
+
+app.get('/report/:username',function(req,res){
+  if (req.session.user_id !== undefined)
+  {
+    var username = htmlspecialchars(req.params.username)
+    res.render('report', {username: username})
+  }
+  else {
+    res.redirect('/')
+  }
+})
+
+app.post('/report-back', function(req, res)
+{
+  if (req.session.user_id !== undefined)
+  {
+    var username = req.body.username;
+    var reason = req.body.reason;
+    send_mail_html('No reply <noreply@matcha.fr>', admin_email,'Report','<html><body><a href="http://localhost:8081/profil/' + username + '">'+ username + '</a> a été report pour le motif ' + reason + ' par l\'utilisateur' + req.session.user_id + '</body></html>')
+  }
+  res.redirect('/');
 })
 
 //A LAISSER EN DERNIER

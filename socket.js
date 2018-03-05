@@ -1,4 +1,5 @@
 var mysql             = require('mysql')
+var htmlspecialchars  = require('htmlspecialchars')
 var con               = mysql.createConnection({
   host: "localhost",
   user:"root",
@@ -6,24 +7,28 @@ var con               = mysql.createConnection({
   database:"matcha"
 })
 var io = require('./index').io;
-// console.log('inin');
-// io.on('connection', function(socket){
-//   console.log('whatever');
-// });
-//
-// io.on('connection', function(socket){
-//   console.log('a user connected');
-//   socket.on('disconnect', function(){
-//     console.log('user disconnected');
-//   });
-// });
-
-// con.query("SELECT ", function (err, result) {
-//   if (err)
-//     console.log(err)
-// })
 
 io.on('connection', function (socket) {
+  socket.on('nonlu', function(id){
+    id = parseInt(id);
+    socket.id = id;
+    var sql = "SELECT count(id) as msg FROM message WHERE new = 1 AND id_dst = " + id
+    con.query(sql, function(err, result)
+    {
+      if (result !== undefined)
+      {
+        var msg = result[0].msg;
+        var sql = "SELECT count(id) as notif FROM notification WHERE new = 1 AND dst = " + id
+        con.query(sql, function(err, result){
+          if (result !== undefined)
+          {
+            var notif = result[0].notif;
+            socket.emit('nonlu', msg, notif);
+          }
+        })
+      }
+    })
+  })
   socket.on('init', function(id, id_dest) {
     id = parseInt(id);
     socket.id = id;
@@ -31,7 +36,6 @@ io.on('connection', function (socket) {
     send_push_notification(1, id, id_dest)
   });
   socket.on('vote', function (dest, value) {
-    console.log('SELECT id, value FROM vote WHERE id_src = ' + socket.id + ' AND id_dst = ' + dest)
     con.query('SELECT id, value FROM vote WHERE id_src = ' + socket.id + ' AND id_dst = ' + dest, function (err, result)
     {
       con.query('SELECT count(*) as nb FROM `vote` as `vote1` LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = ' + socket.id + ' AND vote2.id_src = ' + dest, function (err, result2)
@@ -47,7 +51,11 @@ io.on('connection', function (socket) {
               con.query('UPDATE `user` SET `popularity`=`popularity` - ' + value_old + ' WHERE `id` = ' + dest);
             })
           }
+          else {
+            con.query('DELETE FROM `vote` WHERE id_src = ' + socket.id + ' AND id_dst = ' + dest + ' AND value = ' + result[0].value, function (err, result){         })
+
         }
+      }
         if (result.length == 0 || result[0].value != value)
         {
           con.query("INSERT INTO `vote`(`id_src`, `id_dst`, `value`) VALUES (" + socket.id + ", " + dest + "," + value + ")", function(err, result)
@@ -61,11 +69,9 @@ io.on('connection', function (socket) {
             })
           });
         }
-        console.log('SELECT count(*) as nb FROM `vote` as `vote1` LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = ' + socket.id + ' AND vote2.id_src = ' + dest)
         con.query('SELECT count(*) as nb FROM `vote` as `vote1` LEFT OUTER JOIN `vote` as `vote2` ON `vote2`.`id_src` = `vote1`.`id_dst` AND vote2.value = 1 AND vote1.value = 1 AND vote2.id_dst = vote1.id_src WHERE vote1.id_src = ' + socket.id + ' AND vote2.id_src = ' + dest, function (err, result3)
         {
           var is_matched = (result3 && result3[0] && result3[0].nb == 1 ? 1 : 0)
-          console.log(was_matched + " " + is_matched)
           if (was_matched == 0 && is_matched == 1)
           {
             new_notification(3, socket.id, dest)
@@ -83,9 +89,7 @@ io.on('connection', function (socket) {
     function new_notification(type, src, dest){
       if (!isNaN(type) && !isNaN(src) && !isNaN(dest))
       {
-        send_push_notification(type, src, dest)
         var sql = "INSERT INTO `notification`(`src`, `dst`, `type`) VALUES ('" + src + "','" + dest + "','" + type + "')"
-        console.log(sql)
         con.query(sql)
       }
 
@@ -94,13 +98,14 @@ io.on('connection', function (socket) {
     sql = "SELECT login FROM user WHERE id = " + src
     con.query(sql, function(err, res){
       if (res.length == 1){
-        console.log("Notif envoyée")
         socket.broadcast.emit("notif" + dest, src, res[0].login, type);
       }
     })
   }
-  console.log('connected');
   socket.on('message', function (message) {
+    message.message = htmlspecialchars(message.message);
+    if (message.message.length < 1024)
+    {
     io.emit(message.channel, message)
     var sql = "INSERT INTO message (id_src, id_dst, text) VALUES ?"
     var ids = message.channel.split('-');
@@ -110,5 +115,6 @@ io.on('connection', function (socket) {
       send_push_notification(2, ids[0], ids[1])
       if (err) throw err;
     })
-  })
+  }
+})
 });

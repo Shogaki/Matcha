@@ -9,8 +9,9 @@
         margin-top: 7px;
        }
     </style>
-      <div id=map class=row></div>
-<div style="width:80%;min-width:500px;max-width:1500px;margin:auto">
+      <div id=map class=row></div></br>
+      <p style="text-align:center; color:white">L'emplacement est approximatif</p>
+<div style="width:80%;min-width:500px;max-width:1500px;margin:auto;background-color:lightyellow;"">
     <div class="ui celled grid">
         <div class="row">
           <div class="three wide column">
@@ -56,12 +57,15 @@
             <p><div class="ui right compact yellow segment">
               <h4 class="ui header">Tags :</h4>
               <p><% for(var i=0; i<tags.length; i++){ %>
-                <%= "#" + tags[i].name  %>
+                <% if (me == 1){ %>
+                  <a href="/delete-tags/<%= tags[i].name %>">✖️</a>
+                  <%}%>
+                  <%= "#" + tags[i].name  %>
               <% } %>
             </p>
             </div></p>
             <div class="column">
-                <p><div class="ui right compact yellow segment">
+                <p><div class="ui right compact yellow segment" style="word-wrap: break-word;">
                   <h4 class="ui header">Description</h4>
                   <p><%= value.bio %></p>
                 </div></p>
@@ -77,13 +81,16 @@
           <button id=like class='ui red button'><%= (liked_by_user ? "Déja liké" : "Like")%></button><button class='ui disabled blue button'><%= (matched ? "Match :D" : (liked_user ?  "Vous like !": "Ne vous like pas"))%></button><button id=dislike class='ui grey button'>Ignorer</button>
         </div>
       </div>
-      <button class="ui black button">Report !</button>
+      <a href="/report/<%= value.login %>"<button class="ui black button">Report !</button></a>
     </div>
     </div>
     <script>
       socket.emit('init', <%= id %>, <%=value.id %>)
       $('#like').click(function () {
-        document.getElementById('like').innerHTML = "Déja liké"
+        if (document.getElementById('like').innerHTML == "Déja liké")
+          document.getElementById('like').innerHTML = "Like"
+        else
+          document.getElementById('like').innerHTML = "Déja liké"
         document.getElementById('dislike').innerHTML = "Ignorer"
         socket.emit('vote', <%= value.id %>, 1);
       })
@@ -92,6 +99,9 @@
         document.getElementById('like').innerHTML = "Like"
         socket.emit('vote', <%= value.id %>,-1);
       })
+      </script>
+        <% } %>
+        <script>
       function initMap() {
         var uluru = {lat: <%=value.latitude%>, lng: <%=value.longitude%>};
         var map = new google.maps.Map(document.getElementById('map'), {
@@ -108,6 +118,6 @@
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBwgRxtfHhxdYL6XVDQqfRSk_y5yNVffW0&callback=initMap">
     </script>
   </div>
-  <% } %>
+
 
 </div>
